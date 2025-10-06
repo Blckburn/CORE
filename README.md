@@ -159,7 +159,7 @@ CORE/
 
 ## 📚 Документация
 
-- **[Техническая Документация](TECHNICAL_DOCUMENTATION.md)** - Подробное описание архитектуры
+- **[Техническая Документация](WIKI/TECHNICAL_DOCUMENTATION.md)** - Подробное описание архитектуры
 - **[Game Design Document](WIKI/Game_Design_Document.md)** - Концепция игры
 - **[Technical Architecture](WIKI/Technical_Architecture_Document.md)** - Техническая архитектура
 - **[MVP Roadmap](WIKI/MVP_Roadmap.md)** - План разработки
