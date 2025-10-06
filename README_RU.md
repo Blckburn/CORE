@@ -220,7 +220,7 @@ CORE/
 ## 📞 Контакты
 
 - **GitHub Issues**: [Создать Issue](https://github.com/Blckburn/CORE/issues)
-- **Discussions**: [Обсуждения](https://github.com/Blckburn/CORE/discussions)
+- **Discussions**: [Присоединиться к обсуждению](https://github.com/Blckburn/CORE/discussions)
 - **Репозиторий**: [CORE на GitHub](https://github.com/Blckburn/CORE)
 
 ---
