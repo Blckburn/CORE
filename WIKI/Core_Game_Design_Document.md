@@ -1,160 +1,171 @@
 # Game Design Document: CORE
-## Minimalist 3D Tower Defense
+## Минималистичная 3D Tower Defense
 
 ---
 
-## Core Concept
+## Основная Концепция
 
-CORE is a minimalist 3D tower defense game where players defend a central cube from incoming enemy cubes that attack from all three-dimensional planes. The game features a cyberpunk aesthetic inspired by the TRON universe, with neon glows, geometric shapes, and a pure black void environment. Players strategically place defensive cube turrets in 3D space to intercept and destroy enemies before they reach the central core.
+CORE — это минималистичная 3D tower defense игра, где игроки защищают центральный куб от нападающих вражеских кубов, атакующих со всех трехмерных плоскостей. Игра отличается киберпанк-эстетикой, вдохновленной вселенной TRON, с неоновыми свечениями, геометрическими формами и чистым черным пустым пространством. Игроки стратегически размещают защитные кубические турели в 3D пространстве, чтобы перехватывать и уничтожать врагов до того, как они достигнут центрального ядра.
 
-## Gameplay Mechanics
+## Игровые Механики
 
-### Core Defense Objective
-- **Central Cube**: Positioned at world origin (0, 0, 0)
-- **Health**: 100 HP (configurable)
-- **Damage on Contact**: 1 HP per enemy cube collision
-- **Visual**: Neon cyan cube with glow effect
+### Основной Геймплей
+- **Центральная Цель**: Защита центрального куба от врагов
+- **3D Размещение**: Турели размещаются в трехмерном пространстве
+- **Автоматический Бой**: Турели автоматически атакуют врагов в радиусе
+- **Стратегическое Планирование**: Оптимизация позиций турелей для максимальной эффективности
 
-### Enemy System
-- **Spawn Location**: Random position on sphere radius 50 units from center
-- **Movement**: Linear path toward center cube at 5 units/second
-- **Health**: 1 HP (Level 1)
-- **Damage to Core**: 1 HP on contact
-- **Spawn Rate**: 1 enemy every 2 seconds
-- **Visual**: Neon red cube with glow effect
-- **Behavior**: Direct pathfinding to center, no avoidance
+### Система Турелей
+- **Размещение**: 3D размещение с ограничениями расстояния
+- **Наведение**: Автоматическое наведение на ближайшего врага
+- **Стрельба**: Проектили с самонаведением
+- **Ограничения**: Минимальное и максимальное расстояние от центра
 
-### Tower System
-- **Placement**: Click to place in 3D space (free-form positioning)
-- **Type**: Basic Cube Turret (Level 1)
-- **Damage**: 1 damage per projectile
-- **Range**: 15 units radius
-- **Fire Rate**: 1 projectile per second
-- **Projectile Speed**: 20 units/second
-- **Cost**: 10 energy points per turret
-- **Visual**: Neon yellow cube with glow effect
-- **Targeting**: Nearest enemy within range
+### Система Врагов
+- **Спавн**: Случайное появление на сфере вокруг карты
+- **Движение**: Прямой путь к центральному кубу
+- **Характеристики**: 100 HP, скорость 5 единиц/сек
+- **Поведение**: Простое движение к цели
 
-### Projectile System
-- **Type**: Energy projectile
-- **Damage**: 1 HP per hit
-- **Speed**: 20 units/second
-- **Visual**: Bright white line with trail effect
-- **Duration**: 2 seconds maximum flight time
-- **Collision**: Instant hit detection
+## Визуальный Дизайн
 
-### Resource System
-- **Energy Points**: Starting amount 50
-- **Generation**: +1 energy per second
-- **Turret Cost**: 10 energy per turret
-- **Maximum**: No cap on energy accumulation
+### Эстетика TRON
+- **Цветовая Схема**: Циан, красный, зеленый на черном фоне
+- **Формы**: Только геометрические wireframe объекты
+- **Эффекты**: Неоновые светящиеся эффекты
+- **Стиль**: Минималистичный, киберпанк
 
-### Wave System
-- **Type**: Continuous spawning (no waves)
-- **Escalation**: Every 60 seconds, spawn rate increases by 0.1 enemies/second
-- **Maximum Rate**: 5 enemies/second cap
-- **Enemy Health Scaling**: +1 HP every 120 seconds
+### Объекты Игры
+- **Центральный Куб**: Циан wireframe куб
+- **Враги**: Красные wireframe кубы
+- **Турели**: Зеленые wireframe кубы
+- **Проектили**: Циановые wireframe кольца
+- **Фон**: Чистый черный пустой космос
 
-## Visual Style
+## Технические Характеристики
 
-### Color Palette
-- **Background**: Pure black (#000000)
-- **Player Core Cube**: Neon cyan (#00FFFF) with 50% opacity glow
-- **Enemy Cubes**: Neon red (#FF0040) with 30% opacity glow
-- **Turret Cubes**: Neon yellow (#FFFF00) with 40% opacity glow
-- **Projectiles**: Bright white (#FFFFFF) with trail
-- **UI Elements**: Neon green (#00FF00) for interface
+### Движок
+- **Язык**: C++17
+- **Графика**: OpenGL 3.3
+- **Управление Окном**: GLFW
+- **Математика**: GLM
+- **Сборка**: CMake
 
-### Geometric Design
-- **All Objects**: Perfect cubes only
-- **Core Cube**: 2×2×2 units
-- **Enemy Cubes**: 1×1×1 units
-- **Turret Cubes**: 1×1×1 units
-- **No Curves**: Only straight lines and 90-degree angles
+### Производительность
+- **Целевой FPS**: 60 FPS
+- **Использование Памяти**: ~50MB RAM
+- **Требования GPU**: Поддержка OpenGL 3.3+
+- **Платформа**: Windows 10/11
 
-### Lighting and Effects
-- **Glow Intensity**: 0.3 to 0.5 opacity
-- **Glow Blur**: 2-3 pixel blur radius
-- **No Shadows**: Flat lighting only
-- **Grid Lines**: Optional wireframe grid for spatial reference
-- **Particle Effects**: Minimal, only for destruction
+### Управление
+- **Вращение Камеры**: WASD или ПКМ + мышь
+- **Зум**: Колесо мыши или Q/E
+- **Размещение Турелей**: Клавиша T + ЛКМ
+- **Расстояние Размещения**: Клавиши +/-
 
-### Camera System
-- **Perspective**: 3D third-person view
-- **Position**: Orbital around center cube
-- **Distance**: 25 units from center
-- **Controls**: Mouse drag to rotate, scroll to zoom
-- **Constraints**: Zoom range 15-40 units from center
+## Игровой Процесс
 
-## Technical Requirements
+### Основной Цикл
+1. **Спавн Врагов**: Враги появляются на сфере вокруг карты
+2. **Движение Врагов**: Прямой путь к центральному кубу
+3. **Размещение Турелей**: Игрок размещает турели в 3D пространстве
+4. **Бой**: Турели автоматически атакуют врагов
+5. **Защита**: Предотвращение достижения врагами центра
 
-### 3D Environment
-- **World Size**: 100×100×100 unit cube
-- **Gravity**: None (floating objects)
-- **Collision Detection**: Axis-aligned bounding boxes
-- **Spatial Partitioning**: Octree for performance optimization
+### Правила Размещения Турелей
+- **Минимальное расстояние от центра**: 5 единиц
+- **Максимальное расстояние от центра**: 20 единиц
+- **Минимальное расстояние между турелями**: 3 единицы
+- **3D размещение**: Любая позиция в 3D пространстве
 
-### Rendering Pipeline
-- **API**: OpenGL 3.3+ or Vulkan
-- **Shaders**: Simple vertex/fragment shaders with glow effects
-- **Post-processing**: Minimal bloom for neon effects
-- **Performance Target**: 60 FPS on GTX 1060 equivalent
+### Система Боя
+- **Дальность турели**: 15 единиц
+- **Урон турели**: 25 HP за выстрел
+- **Скорострельность**: 1 выстрел в секунду
+- **Скорость проектиля**: 30 единиц/сек
+- **Радиус попадания**: 1.0 единица
 
-### Input System
-- **Mouse Controls**: 
-  - Left click: Place turret at cursor position
-  - Right drag: Rotate camera
-  - Scroll: Zoom camera
-- **Keyboard Controls**:
-  - WASD: Move camera (alternative to mouse)
-  - Space: Pause game
-  - R: Reset level
+## Пользовательский Интерфейс
 
-### Audio System
-- **Sound Effects**:
-  - Turret placement: Electronic beep
-  - Projectile fire: Energy zap
-  - Enemy destruction: Digital explosion
-  - Core damage: Warning alarm
-- **Music**: Minimal ambient electronic (optional)
+### Элементы HUD
+- **Индикатор Здоровья**: Здоровье центрального куба (будущее)
+- **Счетчик Врагов**: Количество активных врагов
+- **Счетчик Турелей**: Количество размещенных турелей
+- **Счет**: Заработанные очки (будущее)
 
-## Game Flow
+### Меню
+- **Главное Меню**: Простой, минималистичный дизайн
+- **Меню Паузы**: Наложение с опциями
+- **Меню Настроек**: Опции графики и звука
 
-### Start Sequence
-1. Display game title "CORE"
-2. Show controls tutorial (5 seconds)
-3. Spawn first enemy after 3 seconds
-4. Begin continuous enemy spawning
+## Система Прогрессии
 
-### Core Gameplay Loop
-1. Player observes incoming enemies from 3D space
-2. Player places turrets strategically in 3D environment
-3. Turrets automatically target and fire at nearest enemies
-4. Enemies destroyed by projectiles or reach center cube
-5. Game continues until center cube health reaches 0
+### Текущая Реализация
+- **Базовый Геймплей**: Основные механики реализованы
+- **Непрерывная Игра**: Бесконечный спавн врагов
+- **Без Прогрессии**: Чистый survival геймплей
 
-### End Conditions
-- **Game Over**: Center cube health reaches 0
-- **Score**: Based on enemies destroyed and time survived
-- **Restart**: Press R to restart immediately
+### Будущие Функции
+- **Система Волн**: Увеличивающиеся волны сложности
+- **Улучшения Турелей**: Расширенные возможности турелей
+- **Множественные Уровни**: Различные макеты карт
+- **Достижения**: Разблокируемый контент
 
-## Future Expansion Framework
+## Технические Особенности
 
-### Planned Tower Types
-- **Laser Tower**: Continuous beam damage
-- **Area Tower**: Explosive damage in radius
-- **Slow Tower**: Reduces enemy movement speed
+### 3D Движок
+- **Полный 3D Рендеринг**: Полная трехмерная среда
+- **Орбитальная Камера**: Плавное управление камерой
+- **Ray Casting**: Система 3D взаимодействий
+- **Wireframe Рендеринг**: Оптимизированный конвейер рендеринга
 
-### Planned Enemy Types
-- **Fast Enemy**: 2x movement speed, 1 HP
-- **Tank Enemy**: 3 HP, 0.5x movement speed
-- **Swarm Enemy**: Spawns 3 smaller enemies on death
+### Физика
+- **Обнаружение Столкновений**: Сферическая система столкновений
+- **Физика Проектилей**: Поведение самонаводящихся проектилей
+- **Пространственные Запросы**: Эффективное наведение на врагов
 
-### Planned Features
-- **Power-ups**: Temporary turret upgrades
-- **Obstacles**: Destructible environment objects
-- **Multiplayer**: Cooperative defense mode
+### Производительность
+- **Object Pooling**: Эффективное управление памятью
+- **Batch Rendering**: Оптимизированные вызовы отрисовки
+- **Frustum Culling**: Отсечение невидимых объектов
 
----
+## Будущее Развитие
 
-*Document Version: 1.0 - Core MVP Specification*
+### Краткосрочные Цели
+- **Система Волн**: Реализация волн врагов
+- **Улучшения UI**: Лучший пользовательский интерфейс
+- **Интеграция Звука**: Аудио система
+- **Оптимизация Производительности**: Дальнейшие оптимизации
+
+### Долгосрочные Цели
+- **Множественные Типы Турелей**: Различные разновидности турелей
+- **Усиления**: Временные улучшения
+- **Мультиплеер**: Кооперативный геймплей
+- **Редактор Уровней**: Создание пользовательских карт
+
+## Метрики Успеха
+
+### Технические Метрики
+- **Производительность**: 60 FPS на целевом оборудовании
+- **Стабильность**: Геймплей без сбоев
+- **Память**: Эффективное использование памяти
+- **Время Загрузки**: Быстрый запуск игры
+
+### Игровые Метрики
+- **Вовлеченность**: Игроки продолжают играть
+- **Глубина Стратегии**: Множественные жизнеспособные стратегии
+- **Кривая Сложности**: Подходящий уровень вызова
+- **Переиграемость**: Долгосрочная вовлеченность
+
+## Заключение
+
+CORE представляет собой уникальный подход к жанру Tower Defense, сочетающий 3D геймплей с минималистичной эстетикой TRON. Игра фокусируется на стратегической глубине через 3D позиционирование, сохраняя при этом визуальную простоту и чистый дизайн. Текущая реализация обеспечивает прочную основу для будущего развития и расширения функций.
+
+Игра успешно демонстрирует:
+- **Инновационные механики 3D Tower Defense**
+- **Отличительный визуальный стиль**
+- **Чистый, сфокусированный геймплей**
+- **Техническое совершенство**
+- **Расширяемость для будущих функций**
+
+CORE позиционируется для привлечения энтузиастов стратегических игр и поклонников минималистичного дизайна, предлагая свежий взгляд на жанр Tower Defense.

@@ -1,595 +1,683 @@
-# Technical Architecture Specification: CORE
-## Minimalist 3D Tower Defense Engine
+# Техническая Архитектурная Спецификация: CORE
 
----
+## Обзор Проекта
 
-## Project Overview
+**CORE** — это минималистичная 3D Tower Defense игра, построенная на собственном движке C++. Проект подчеркивает чистую архитектуру, современные практики C++ и оптимизацию производительности, сохраняя при этом эстетику TRON и механики 3D геймплея.
 
-### Technology Stack
-- **Language**: C++17
-- **Graphics API**: OpenGL 3.3+ (Vulkan upgrade path planned)
-- **Math Library**: GLM (OpenGL Mathematics)
-- **Window Management**: GLFW
-- **Audio**: OpenAL or FMOD (minimal requirements)
-- **Build System**: CMake 3.20+
-- **Platforms**: Windows, Linux, macOS
+## Архитектура Движка
 
-### Performance Targets
-- **Frame Rate**: 60 FPS minimum
-- **Memory Usage**: < 200 MB RAM
-- **Load Time**: < 3 seconds
-- **Binary Size**: < 50 MB
-- **Target Hardware**: GTX 1060 / RX 580 equivalent
+### Основные Принципы Дизайна
 
----
+1. **Модульность**: Четкое разделение ответственности между системами
+2. **Производительность**: Оптимизация для 60 FPS на целевом оборудовании
+3. **Расширяемость**: Легкое добавление новых функций
+4. **Поддерживаемость**: Чистая, читаемая структура кода
+5. **Современный C++**: Использование функций C++17 и лучших практик
 
-## Core Architecture
+### Архитектура Системы
 
-### Engine Structure
 ```
-CORE/
-├── src/
-│   ├── core/                 # Engine core systems
-│   │   ├── engine.h          # Main engine class
-│   │   ├── window.h          # Window management
-│   │   ├── input.h           # Input handling
-│   │   └── time.h            # Time management
-│   ├── graphics/             # Rendering systems
-│   │   ├── renderer.h        # Main renderer
-│   │   ├── shader.h          # Shader management
-│   │   ├── mesh.h            # Mesh rendering
-│   │   └── camera.h          # Camera system
-│   ├── game/                 # Game logic
-│   │   ├── game.h            # Main game class
-│   │   ├── entity.h          # Entity system
-│   │   ├── turret.h          # Turret logic
-│   │   ├── enemy.h           # Enemy logic
-│   │   └── projectile.h      # Projectile logic
-│   └── utils/                # Utilities
-│       ├── math.h            # Math utilities
-│       └── debug.h           # Debug tools
-├── assets/
-│   ├── shaders/              # GLSL shaders
-│   ├── textures/             # Simple textures (if needed)
-│   └── audio/                # Sound effects
-└── external/                 # Third-party libraries
+CORE Engine
+├── Основные Системы
+│   ├── Engine (Главный координатор)
+│   ├── Window Management (GLFW)
+│   ├── Input Management
+│   ├── Time Management
+│   └── Event System
+├── Графический Конвейер
+│   ├── Renderer (OpenGL 3.3)
+│   ├── Camera System
+│   ├── Shader Management
+│   ├── Mesh System
+│   └── Ray Casting
+├── Игровая Логика
+│   ├── Game State Management
+│   ├── Entity System
+│   ├── Enemy System
+│   ├── Turret System
+│   └── Projectile System
+└── Утилиты
+    ├── Mathematics (GLM)
+    ├── Debug Tools
+    └── Performance Profiling
 ```
 
-### Entity Component System (ECS)
+## Детальное Описание Систем
 
-#### Entity Class
+### 1. Основные Системы
+
+#### Engine Class
+**Ответственность**: Координация основного игрового цикла и инициализация систем
+
 ```cpp
-class Entity {
-public:
-    Entity(uint32_t id) : id_(id) {}
-    uint32_t GetID() const { return id_; }
-    
+class Engine {
 private:
-    uint32_t id_;
+    std::unique_ptr<Window> window_;
+    std::unique_ptr<InputManager> input_;
+    std::unique_ptr<Renderer> renderer_;
+    std::unique_ptr<Game> game_;
+    
+public:
+    bool Initialize();
+    void Run();
+    void Shutdown();
 };
 ```
 
-#### Component System
+**Ключевые Особенности**:
+- Управление порядком инициализации систем
+- Координация основного игрового цикла
+- Процедуры чистого завершения
+- Обработка ошибок и восстановление
+
+#### Window Management
+**Ответственность**: Создание окна GLFW и настройка контекста OpenGL
+
 ```cpp
-// Position Component
-struct PositionComponent {
-    glm::vec3 position;
-    glm::vec3 rotation;
-    glm::vec3 scale;
-};
-
-// Health Component
-struct HealthComponent {
-    float current_health;
-    float max_health;
-};
-
-// Render Component
-struct RenderComponent {
-    glm::vec3 color;
-    float glow_intensity;
-    bool visible;
-};
-
-// Movement Component
-struct MovementComponent {
-    glm::vec3 velocity;
-    glm::vec3 target_position;
-    float speed;
-};
-
-// Turret Component
-struct TurretComponent {
-    float range;
-    float fire_rate;
-    float last_shot_time;
-    Entity target;
+class Window {
+private:
+    GLFWwindow* window_;
+    int width_, height_;
+    
+public:
+    bool Initialize(const char* title, int width, int height);
+    void SwapBuffers();
+    void PollEvents();
+    bool ShouldClose();
 };
 ```
 
-#### System Classes
+**Особенности**:
+- Создание контекста OpenGL 3.3
+- Обработка событий окна
+- Обработка изменения размера
+- Готовность к поддержке нескольких мониторов
+
+#### Input Management
+**Ответственность**: Централизованная обработка ввода с отслеживанием состояния
+
 ```cpp
-class RenderSystem {
-public:
-    void Update(const std::vector<Entity>& entities);
-    void Render(const std::vector<Entity>& entities);
-    
+class InputManager {
 private:
-    void RenderCube(const PositionComponent& pos, 
-                   const RenderComponent& render);
-};
-
-class MovementSystem {
-public:
-    void Update(std::vector<Entity>& entities, float delta_time);
+    bool keys_[GLFW_KEY_LAST];
+    bool keys_prev_[GLFW_KEY_LAST];
+    bool mouse_buttons_[GLFW_MOUSE_BUTTON_LAST];
+    glm::vec2 mouse_position_;
+    float scroll_delta_;
     
-private:
-    void UpdateEnemyMovement(Entity entity, float delta_time);
-};
-
-class TurretSystem {
 public:
-    void Update(std::vector<Entity>& entities, float delta_time);
-    void FireTurret(Entity turret, Entity target);
-    
-private:
-    Entity FindNearestEnemy(Entity turret);
-    bool IsInRange(Entity turret, Entity enemy);
-};
-
-class CollisionSystem {
-public:
-    void CheckCollisions(std::vector<Entity>& entities);
-    bool CheckProjectileHit(Entity projectile, Entity target);
-    bool CheckEnemyReachCore(Entity enemy);
+    bool IsKeyPressed(int key);
+    bool IsKeyJustPressed(int key);
+    glm::vec2 GetMousePosition();
+    float GetScrollDelta();
 };
 ```
 
----
+**Особенности**:
+- Отслеживание состояния ввода с точностью до кадра
+- Ввод мыши и клавиатуры
+- Поддержка колеса прокрутки
+- Настраиваемые привязки клавиш
 
-## Rendering Pipeline
+#### Time Management
+**Ответственность**: Время кадров и расчет delta time
 
-### Shader Architecture
-
-#### Vertex Shader (basic.vert)
-```glsl
-#version 330 core
-
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aColor;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-out vec3 vertexColor;
-
-void main() {
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-    vertexColor = aColor;
-}
-```
-
-#### Fragment Shader (basic.frag)
-```glsl
-#version 330 core
-
-in vec3 vertexColor;
-out vec4 FragColor;
-
-uniform float glow_intensity;
-
-void main() {
-    vec3 finalColor = vertexColor * glow_intensity;
-    FragColor = vec4(finalColor, 1.0);
-}
-```
-
-### Mesh System
 ```cpp
-class CubeMesh {
-public:
-    static void Create();
-    static void Render();
-    static void Destroy();
-    
+class Time {
 private:
-    static GLuint VAO, VBO, EBO;
-    static const float vertices[];
-    static const unsigned int indices[];
-};
-
-// Cube vertices (1x1x1 unit cube)
-const float CubeMesh::vertices[] = {
-    // Front face
-    -0.5f, -0.5f,  0.5f,  // Bottom-left
-     0.5f, -0.5f,  0.5f,  // Bottom-right
-     0.5f,  0.5f,  0.5f,  // Top-right
-    -0.5f,  0.5f,  0.5f,  // Top-left
-    // ... (complete cube definition)
+    static float delta_time_;
+    static float last_frame_time_;
+    
+public:
+    static void Initialize();
+    static void Update();
+    static float GetDeltaTime();
+    static float GetFPS();
 };
 ```
 
-### Camera System
+**Особенности**:
+- Точный расчет delta time
+- Мониторинг FPS
+- Ограничение частоты кадров
+- Метрики производительности
+
+### 2. Графический Конвейер
+
+#### Renderer System
+**Ответственность**: Управление состоянием OpenGL и координация рендеринга
+
+```cpp
+class Renderer {
+public:
+    bool Initialize();
+    void BeginFrame();
+    void EndFrame();
+    void SetViewport(int width, int height);
+    void SetClearColor(float r, float g, float b, float a);
+};
+```
+
+**Конфигурация OpenGL**:
+- Включено тестирование глубины
+- Смешивание для прозрачности
+- Режим wireframe рендеринга
+- Оптимизированные изменения состояния
+
+#### Camera System
+**Ответственность**: 3D камера с орбитальным управлением
+
 ```cpp
 class Camera {
-public:
-    Camera(glm::vec3 position, glm::vec3 target);
-    
-    void Update(float delta_time);
-    void HandleInput(float delta_time);
-    
-    glm::mat4 GetViewMatrix() const;
-    glm::mat4 GetProjectionMatrix() const;
-    
-    void SetPosition(glm::vec3 position);
-    void SetTarget(glm::vec3 target);
-    void SetZoom(float zoom);
-    
 private:
     glm::vec3 position_;
     glm::vec3 target_;
-    glm::vec3 up_;
     float zoom_;
-    float rotation_speed_;
-    float zoom_speed_;
+    float rotation_x_, rotation_y_;
     
-    void UpdateViewMatrix();
-    glm::mat4 view_matrix_;
-    glm::mat4 projection_matrix_;
+public:
+    void SetZoom(float zoom);
+    void Rotate(float delta_x, float delta_y);
+    glm::mat4 GetViewMatrix();
+    glm::mat4 GetProjectionMatrix();
+    glm::vec3 GetPosition();
 };
 ```
 
----
+**Особенности**:
+- Орбитальное управление камерой
+- Плавное вращение и зум
+- Настраиваемое поле зрения
+- Перспективная проекция
 
-## Game Logic Architecture
+#### Shader System
+**Ответственность**: Компиляция и управление шейдерами OpenGL
 
-### Game State Management
 ```cpp
-enum class GameState {
-    MENU,
-    PLAYING,
-    PAUSED,
-    GAME_OVER
-};
-
-class Game {
+class Shader {
+private:
+    GLuint program_id_;
+    
 public:
-    Game();
-    ~Game();
+    bool LoadFromFiles(const std::string& vertex_path, const std::string& fragment_path);
+    void Use();
+    void SetUniform(const std::string& name, const glm::mat4& matrix);
+    void SetUniform(const std::string& name, const glm::vec3& vector);
+    void SetUniform(const std::string& name, float value);
+};
+```
+
+**Конвейер Шейдеров**:
+- Вертексный шейдер: 3D трансформация
+- Фрагментный шейдер: Вывод цвета
+- Управление uniform переменными
+- Обработка ошибок и валидация
+
+#### Mesh System
+**Ответственность**: Создание и рендеринг 3D геометрии
+
+```cpp
+class Mesh {
+private:
+    GLuint VAO_, VBO_, EBO_;
+    size_t index_count_;
+    bool created_;
     
-    void Initialize();
-    void Run();
-    void Shutdown();
-    
-    void Update(float delta_time);
+public:
+    bool Create();
     void Render();
-    
-    void HandleInput();
-    void HandleMouseClick(glm::vec2 screen_pos);
-    
+    void RenderWireframe();
+    void CreateCube();
+    void CreateCubeWireframe();
+    void CreateDisc(float radius, int segments);
+    void Destroy();
+};
+```
+
+**Типы Мешей**:
+- Wireframe кубы для игровых объектов
+- Полые кольца для проектилей
+- Эффективное управление vertex buffer
+- Рендеринг на основе индексов
+
+#### Ray Casting System
+**Ответственность**: 3D взаимодействие и обнаружение столкновений
+
+```cpp
+class RayCaster {
+public:
+    glm::vec3 GetGroundIntersection(const glm::vec2& mouse_pos, const Camera* camera, 
+                                   int screen_width, int screen_height, float ground_y = 0.0f);
+    glm::vec3 GetPlaneIntersection(const glm::vec2& screen_pos, const Camera* camera,
+                                  int screen_width, int screen_height,
+                                  const glm::vec3& plane_center, const glm::vec3& plane_normal);
+    glm::vec3 GetSphereIntersection(const glm::vec2& screen_pos, const Camera* camera,
+                                   int screen_width, int screen_height,
+                                   const glm::vec3& sphere_center, float sphere_radius);
+};
+```
+
+**Особенности**:
+- Преобразование экранных координат в мировые
+- Пересечение 3D плоскостей
+- Тестирование пересечения сфер
+- Эффективные алгоритмы ray casting
+
+### 3. Системы Игровой Логики
+
+#### Game State Management
+**Ответственность**: Общая координация состояния игры
+
+```cpp
+class Game {
 private:
-    GameState current_state_;
-    float game_time_;
-    int score_;
-    int energy_;
-    
-    // Core systems
+    std::unique_ptr<Shader> shader_;
+    std::unique_ptr<Mesh> cube_mesh_, enemy_mesh_, turret_mesh_, projectile_mesh_;
     std::unique_ptr<Camera> camera_;
-    std::unique_ptr<RenderSystem> render_system_;
-    std::unique_ptr<MovementSystem> movement_system_;
-    std::unique_ptr<TurretSystem> turret_system_;
-    std::unique_ptr<CollisionSystem> collision_system_;
+    std::unique_ptr<EnemySpawner> enemy_spawner_;
+    std::unique_ptr<TurretManager> turret_manager_;
+    std::unique_ptr<ProjectileManager> projectile_manager_;
     
-    // Game entities
-    Entity core_entity_;
-    std::vector<Entity> turrets_;
-    std::vector<Entity> enemies_;
-    std::vector<Entity> projectiles_;
+    bool turret_placement_mode_;
+    glm::vec3 preview_position_;
+    bool preview_valid_;
+};
+```
+
+**Особенности**:
+- Координация компонентов
+- Управление состоянием
+- Координация рендеринга
+- Делегирование обработки ввода
+
+#### Entity System
+**Ответственность**: Базовая функциональность сущностей
+
+```cpp
+class Entity {
+protected:
+    glm::vec3 position_;
+    glm::vec3 rotation_;
+    glm::vec3 scale_;
+    bool active_;
     
+public:
+    virtual void Update(float delta_time) = 0;
+    virtual void Render() = 0;
+    virtual bool Initialize() = 0;
+};
+```
+
+**Особенности**:
+- Базовый интерфейс сущности
+- Управление трансформациями
+- Управление жизненным циклом
+- Расширяемый дизайн
+
+#### Enemy System
+**Ответственность**: Спавн, движение и жизненный цикл врагов
+
+```cpp
+class Enemy : public Entity {
+private:
+    glm::vec3 target_position_;
+    float speed_;
+    int health_;
+    glm::vec3 color_;
+    bool has_reached_target_;
+    
+public:
+    void Update(float delta_time) override;
+    void TakeDamage(int amount);
+    bool IsAlive() const;
+    bool HasReachedTarget() const;
+};
+
+class EnemySpawner {
+private:
+    std::vector<std::unique_ptr<Enemy>> enemies_;
+    float spawn_timer_;
+    float spawn_rate_;
+    float spawn_radius_;
+    std::mt19937 rng_;
+    
+public:
+    void SetSpawnRate(float rate);
+    void SetSpawnRadius(float radius);
     void SpawnEnemy();
-    void UpdateGameplay(float delta_time);
-    void CheckGameOver();
+    void Update(float delta_time);
 };
 ```
 
-### Entity Management
+**Особенности**:
+- Случайное позиционирование спавна
+- Настраиваемые скорости спавна
+- Эффективное управление врагами
+- Обнаружение столкновений
+
+#### Turret System
+**Ответственность**: Размещение, наведение и стрельба турелей
+
 ```cpp
-class EntityManager {
-public:
-    Entity CreateEntity();
-    void DestroyEntity(Entity entity);
-    
-    template<typename T>
-    void AddComponent(Entity entity, const T& component);
-    
-    template<typename T>
-    T& GetComponent(Entity entity);
-    
-    template<typename T>
-    bool HasComponent(Entity entity);
-    
-    template<typename T>
-    void RemoveComponent(Entity entity);
-    
-    std::vector<Entity> GetEntitiesWithComponent();
-    
+class Turret : public Entity {
 private:
-    uint32_t next_entity_id_;
-    std::unordered_map<uint32_t, std::unordered_map<std::type_index, void*>> components_;
+    float range_;
+    int damage_;
+    float reload_time_;
+    float last_fire_time_;
+    float rotation_;
+    Enemy* current_target_;
     
-    template<typename T>
-    std::type_index GetTypeIndex();
-};
-```
-
-### Spatial Management
-```cpp
-class SpatialGrid {
 public:
-    SpatialGrid(float cell_size, glm::vec3 world_size);
-    
-    void Insert(Entity entity, const PositionComponent& pos);
-    void Remove(Entity entity);
-    void Update(Entity entity, const PositionComponent& old_pos, 
-                const PositionComponent& new_pos);
-    
-    std::vector<Entity> GetEntitiesInRadius(glm::vec3 center, float radius);
-    std::vector<Entity> GetEntitiesInBox(glm::vec3 min, glm::vec3 max);
-    
+    void Update(float delta_time) override;
+    void UpdateTarget(const std::vector<std::unique_ptr<Enemy>>& enemies);
+    void Fire(ProjectileManager* projectile_manager);
+    bool CanFire() const;
+};
+
+class TurretManager {
 private:
-    float cell_size_;
-    glm::vec3 world_size_;
-    std::unordered_map<glm::ivec3, std::vector<Entity>> grid_;
+    std::vector<std::unique_ptr<Turret>> turrets_;
+    float min_distance_from_center_;
+    float max_distance_from_center_;
+    float min_distance_between_turrets_;
     
-    glm::ivec3 WorldToGrid(glm::vec3 world_pos);
-    std::vector<glm::ivec3> GetCellsInRadius(glm::vec3 center, float radius);
+public:
+    bool PlaceTurret(const glm::vec3& position);
+    bool IsValidPlacement(const glm::vec3& position) const;
+    void Update(float delta_time, const std::vector<std::unique_ptr<Enemy>>& enemies);
 };
 ```
 
----
+**Особенности**:
+- Валидация 3D размещения
+- Автоматическое наведение
+- Настраиваемые правила размещения
+- Эффективное управление турелями
 
-## Input System
+#### Projectile System
+**Ответственность**: Создание, движение и столкновение проектилей
 
-### Input Handler
 ```cpp
-class InputManager {
-public:
-    InputManager(GLFWwindow* window);
-    
-    void Update();
-    
-    bool IsKeyPressed(int key);
-    bool IsMouseButtonPressed(int button);
-    glm::vec2 GetMousePosition();
-    glm::vec2 GetMouseDelta();
-    float GetScrollDelta();
-    
-    void SetMouseCallback(std::function<void(int, int)> callback);
-    void SetScrollCallback(std::function<void(float)> callback);
-    
+class Projectile : public Entity {
 private:
-    GLFWwindow* window_;
-    glm::vec2 mouse_position_;
-    glm::vec2 mouse_delta_;
-    float scroll_delta_;
+    glm::vec3 target_position_;
+    glm::vec3 direction_;
+    float speed_;
+    int damage_;
+    float lifetime_;
+    float current_lifetime_;
     
-    static void MouseCallback(GLFWwindow* window, double x, double y);
-    static void ScrollCallback(GLFWwindow* window, double x, double y);
-    static void KeyCallback(GLFWwindow* window, int key, int scancode, 
-                           int action, int mods);
-};
-```
-
-### 3D Mouse Interaction
-```cpp
-class Mouse3D {
 public:
-    static glm::vec3 ScreenToWorld(glm::vec2 screen_pos, 
-                                   const Camera& camera,
-                                   float depth = 0.0f);
-    
-    static glm::vec3 GetRayDirection(glm::vec2 screen_pos,
-                                    const Camera& camera);
-    
-    static bool RayIntersectsCube(glm::vec3 ray_origin,
-                                 glm::vec3 ray_direction,
-                                 glm::vec3 cube_center,
-                                 float cube_size);
+    void Update(float delta_time) override;
+    void UpdateTarget(const glm::vec3& new_target_position);
+    bool CheckHit(const glm::vec3& target_position, float hit_radius) const;
 };
-```
 
----
-
-## Audio System
-
-### Audio Manager
-```cpp
-class AudioManager {
-public:
-    AudioManager();
-    ~AudioManager();
-    
-    void Initialize();
-    void Shutdown();
-    
-    void PlaySound(const std::string& sound_name);
-    void SetMasterVolume(float volume);
-    
+class ProjectileManager {
 private:
-    std::unordered_map<std::string, ALuint> sounds_;
-    ALCdevice* device_;
-    ALCcontext* context_;
+    std::vector<std::unique_ptr<Projectile>> projectiles_;
+    int active_projectiles_count_;
     
-    ALuint LoadSound(const std::string& filepath);
-    void PlaySoundEffect(ALuint source);
-};
-```
-
-### Sound Effects
-- **turret_place.wav**: Electronic beep (0.5s)
-- **projectile_fire.wav**: Energy zap (0.3s)
-- **enemy_hit.wav**: Digital explosion (0.4s)
-- **core_damage.wav**: Warning alarm (1.0s)
-- **game_over.wav**: System shutdown (2.0s)
-
----
-
-## Performance Optimization
-
-### Rendering Optimization
-```cpp
-class RenderBatch {
 public:
-    void AddCube(const PositionComponent& pos, 
-                 const RenderComponent& render);
-    void Flush();
-    
-private:
-    std::vector<glm::vec3> positions_;
-    std::vector<glm::vec3> colors_;
-    GLuint VAO_, VBO_;
-    
-    void CreateBuffers();
-    void UpdateBuffers();
+    void CreateProjectile(const glm::vec3& start_position, const glm::vec3& target_position, 
+                         float speed, int damage);
+    void Update(float delta_time, const std::vector<std::unique_ptr<Enemy>>& enemies);
 };
 ```
 
-### Memory Management
+**Особенности**:
+- Поведение самонаводящихся проектилей
+- Эффективное обнаружение столкновений
+- Управление временем жизни
+- Оптимизация производительности
+
+### 4. Системы Утилит
+
+#### Mathematics
+**Ответственность**: Математические операции и трансформации
+
 ```cpp
-class ObjectPool {
-public:
-    ObjectPool(size_t initial_size);
-    
-    Entity GetEntity();
-    void ReturnEntity(Entity entity);
-    
-    void Reserve(size_t count);
-    void Clear();
-    
-private:
-    std::queue<Entity> available_entities_;
-    std::vector<Entity> all_entities_;
-    size_t max_size_;
-};
+namespace Math {
+    glm::mat4 CreateTransformMatrix(const glm::vec3& position, const glm::vec3& rotation, const glm::vec3& scale);
+    glm::vec3 ScreenToWorldRay(const glm::vec2& screen_pos, const Camera* camera, int screen_width, int screen_height);
+    bool RaySphereIntersection(const glm::vec3& ray_origin, const glm::vec3& ray_direction, 
+                              const glm::vec3& sphere_center, float sphere_radius, float& t);
+}
 ```
 
-### Performance Monitoring
+**Особенности**:
+- Интеграция GLM
+- Пользовательские математические утилиты
+- Помощники 3D трансформации
+- Алгоритмы пересечения
+
+#### Debug System
+**Ответственность**: Вывод отладки и мониторинг производительности
+
 ```cpp
-class PerformanceProfiler {
+class Debug {
 public:
-    static void BeginFrame();
-    static void EndFrame();
-    
-    static void BeginSample(const std::string& name);
-    static void EndSample();
-    
-    static void PrintStats();
-    
-private:
-    struct Sample {
-        std::string name;
-        std::chrono::high_resolution_clock::time_point start_time;
-        float duration_ms;
-    };
-    
-    static std::vector<Sample> samples_;
-    static float frame_time_;
+    static void Log(const std::string& message);
+    static void LogError(const std::string& message);
+    static void LogWarning(const std::string& message);
+    static void DrawDebugLine(const glm::vec3& start, const glm::vec3& end, const glm::vec3& color);
+    static void DrawDebugSphere(const glm::vec3& center, float radius, const glm::vec3& color);
 };
 ```
 
----
+**Особенности**:
+- Управление выводом консоли
+- Метрики производительности
+- Визуальный отладочный рендеринг
+- Настраиваемые уровни отладки
 
-## Build Configuration
+## Система Сборки
 
-### CMakeLists.txt
+### CMake Конфигурация
+
 ```cmake
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.16)
 project(CORE)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find packages
-find_package(OpenGL REQUIRED)
-find_package(glfw3 REQUIRED)
-find_package(glm REQUIRED)
+# Интеграция vcpkg
+set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
 
-# Add executable
-add_executable(CORE
+# Поиск пакетов
+find_package(glfw3 CONFIG REQUIRED)
+find_package(glad CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
+
+# Исходные файлы
+set(SOURCES
     src/main.cpp
     src/core/engine.cpp
+    src/core/window.cpp
+    src/core/input.cpp
+    src/core/time.cpp
     src/graphics/renderer.cpp
+    src/graphics/camera.cpp
+    src/graphics/shader.cpp
+    src/graphics/mesh.cpp
+    src/graphics/ray_caster.cpp
     src/game/game.cpp
-    # ... other source files
+    src/game/entity.cpp
+    src/game/enemy.cpp
+    src/game/enemy_spawner.cpp
+    src/game/turret.cpp
+    src/game/turret_manager.cpp
+    src/game/turret_preview.cpp
+    src/game/projectile.cpp
+    src/game/projectile_manager.cpp
+    src/utils/math.cpp
+    src/utils/debug.cpp
 )
 
-# Link libraries
-target_link_libraries(CORE
-    OpenGL::GL
-    glfw
-    glm::glm
+# Заголовочные файлы
+set(HEADERS
+    src/core/engine.h
+    src/core/window.h
+    src/core/input.h
+    src/core/time.h
+    src/graphics/renderer.h
+    src/graphics/camera.h
+    src/graphics/shader.h
+    src/graphics/mesh.h
+    src/graphics/ray_caster.h
+    src/game/game.h
+    src/game/entity.h
+    src/game/enemy.h
+    src/game/enemy_spawner.h
+    src/game/turret.h
+    src/game/turret_manager.h
+    src/game/turret_preview.h
+    src/game/projectile.h
+    src/game/projectile_manager.h
+    src/utils/math.h
+    src/utils/debug.h
 )
 
-# Include directories
-target_include_directories(CORE PRIVATE
-    src/
-    external/
-)
-```
+# Создание исполняемого файла
+add_executable(CORE ${SOURCES} ${HEADERS})
 
-### Compiler Flags
-```cmake
-# Release flags
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -march=native")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
+# Связывание библиотек
+target_link_libraries(CORE glfw glad glm)
 
-# Platform-specific optimizations
-if(WIN32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W3")
-elseif(UNIX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+# Опции компилятора
+if(MSVC)
+    target_compile_options(CORE PRIVATE /W4)
+else()
+    target_compile_options(CORE PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 ```
 
----
+### Зависимости
 
-## Testing Framework
+**Основные Библиотеки**:
+- **GLFW 3.3+**: Управление окнами и вводом
+- **GLAD**: Загрузчик OpenGL
+- **GLM 0.9.9+**: Библиотека математики
+- **OpenGL 3.3**: API графики
 
-### Unit Tests
+**Инструменты Разработки**:
+- **CMake 3.16+**: Система сборки
+- **vcpkg**: Менеджер пакетов
+- **Visual Studio 2019+**: IDE (Windows)
+- **Git**: Контроль версий
+
+## Соображения Производительности
+
+### Стратегии Оптимизации
+
+1. **Object Pooling**: Переиспользование объектов проектилей для уменьшения выделений
+2. **Batch Rendering**: Группировка похожих объектов для эффективных вызовов отрисовки
+3. **Frustum Culling**: Пропуск рендеринга объектов вне экрана
+4. **Efficient Collision**: Использование простого сферического обнаружения столкновений
+5. **Memory Management**: Принципы умных указателей и RAII
+
+### Цели Производительности
+
+- **Частота Кадров**: 60 FPS на целевом оборудовании
+- **Использование Памяти**: <100MB RAM
+- **Время Загрузки**: <3 секунд запуска
+- **Использование CPU**: <10% на современных процессорах
+- **Использование GPU**: Оптимизация для встроенной графики
+
+### Инструменты Профилирования
+
+- **Встроенный Счетчик FPS**: Мониторинг производительности в реальном времени
+- **Отслеживание Памяти**: Мониторинг выделений
+- **Анализ Времени Кадра**: Разбивка производительности по кадрам
+- **Профилирование GPU**: Анализ производительности OpenGL
+
+## Обработка Ошибок
+
+### Стратегия Управления Ошибками
+
 ```cpp
-#include <gtest/gtest.h>
+enum class ErrorCode {
+    SUCCESS = 0,
+    WINDOW_CREATION_FAILED,
+    OPENGL_INITIALIZATION_FAILED,
+    SHADER_COMPILATION_FAILED,
+    MESH_CREATION_FAILED,
+    FILE_NOT_FOUND,
+    INVALID_PARAMETER
+};
 
-TEST(EntityManagerTest, CreateDestroyEntity) {
-    EntityManager manager;
-    Entity entity = manager.CreateEntity();
-    EXPECT_NE(entity.GetID(), 0);
-    
-    manager.DestroyEntity(entity);
-    // Verify entity is destroyed
-}
-
-TEST(CollisionSystemTest, ProjectileHitEnemy) {
-    CollisionSystem collision_system;
-    
-    Entity projectile = CreateTestProjectile();
-    Entity enemy = CreateTestEnemy();
-    
-    bool hit = collision_system.CheckProjectileHit(projectile, enemy);
-    EXPECT_TRUE(hit);
-}
-
-TEST(SpatialGridTest, RadiusQuery) {
-    SpatialGrid grid(5.0f, glm::vec3(100.0f));
-    
-    Entity entity = CreateEntityAt(glm::vec3(10.0f, 0.0f, 0.0f));
-    grid.Insert(entity, GetPosition(entity));
-    
-    auto entities = grid.GetEntitiesInRadius(glm::vec3(0.0f), 15.0f);
-    EXPECT_EQ(entities.size(), 1);
-}
+class Error {
+public:
+    static void Log(ErrorCode code, const std::string& message);
+    static bool CheckGLError();
+    static void HandleCriticalError(ErrorCode code, const std::string& message);
+};
 ```
 
----
+**Особенности Обработки Ошибок**:
+- Комплексные коды ошибок
+- Проверка ошибок OpenGL
+- Изящное восстановление от ошибок
+- Подробное логирование ошибок
 
-*Document Version: 1.0 - Technical Foundation*
+## Будущие Улучшения Архитектуры
+
+### Планируемые Улучшения
+
+1. **Entity-Component-System (ECS)**:
+   ```cpp
+   class EntityManager {
+   public:
+       Entity CreateEntity();
+       void DestroyEntity(Entity entity);
+       template<typename T> T& AddComponent(Entity entity);
+       template<typename T> T& GetComponent(Entity entity);
+   };
+   ```
+
+2. **Система Событий**:
+   ```cpp
+   class EventBus {
+   public:
+       template<typename T> void Subscribe(std::function<void(const T&)> callback);
+       template<typename T> void Publish(const T& event);
+   };
+   ```
+
+3. **Интеграция Скриптинга**:
+   - Lua скриптинг для игровой логики
+   - Python инструменты для создания контента
+   - Возможности горячей перезагрузки
+
+4. **Продвинутый Рендеринг**:
+   - Конвейер отложенного затенения
+   - Карты теней
+   - Пост-обработка эффектов
+   - Системы частиц
+
+5. **Аудио Система**:
+   - 3D позиционное аудио
+   - Динамическая музыкальная система
+   - Управление звуковыми эффектами
+
+### Соображения Масштабируемости
+
+- **Модульный Дизайн**: Легкое добавление новых систем
+- **Архитектура Плагинов**: Расширяемая функциональность
+- **Система Конфигурации**: Настройка параметров во время выполнения
+- **Управление Ресурсами**: Эффективная загрузка и кэширование ресурсов
+
+## Заключение
+
+Архитектура движка CORE обеспечивает прочную основу для 3D Tower Defense геймплея, сохраняя при этом чистый, поддерживаемый код. Модульный дизайн позволяет легко расширять и модифицировать, в то время как оптимизации производительности обеспечивают плавный геймплей на целевом оборудовании.
+
+Ключевые архитектурные преимущества:
+- **Четкое разделение ответственности**
+- **Современные практики C++**
+- **Оптимизация производительности**
+- **Расширяемый дизайн**
+- **Комплексная обработка ошибок**
+
+Архитектура спроектирована для роста вместе с проектом, поддерживая будущие улучшения при сохранении основных принципов простоты, производительности и поддерживаемости.

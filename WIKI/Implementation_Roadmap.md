@@ -1,517 +1,347 @@
-# Implementation Roadmap: CORE
-## Minimalist 3D Tower Defense Development Plan
-
----
-
-## Project Overview
-
-### Development Timeline
-- **Total Duration**: 12 weeks (3 months)
-- **Team Size**: 1-2 developers
-- **Target Platforms**: Windows, Linux
-- **MVP Goal**: Playable game with core mechanics
-
-### Success Criteria
-- ✅ 60 FPS stable performance on GTX 1060
-- ✅ Intuitive 3D controls and camera
-- ✅ Smooth enemy spawning and movement
-- ✅ Responsive turret placement and firing
-- ✅ Visual consistency with TRON aesthetic
-- ✅ Core gameplay loop engaging for 10+ minutes
-
----
-
-## Phase 1: Foundation (Weeks 1-3)
-
-### Week 1: Project Setup and Basic Rendering
-**Goal**: Establish development environment and render first cube
-
-#### Tasks
-- [ ] **Project Setup**
-  - Initialize CMake project structure
-  - Integrate GLFW, GLM, OpenGL dependencies
-  - Set up development environment (IDE, debugger)
-  - Create basic build pipeline
-
-- [ ] **Window and Context**
-  - Create GLFW window (1280x720, "CORE")
-  - Set up OpenGL context (version 3.3+)
-  - Implement basic input handling (ESC to quit)
-  - Add window resize handling
-
-- [ ] **Basic Shader System**
-  - Create vertex shader for cube rendering
-  - Create fragment shader with color input
-  - Implement shader loading and compilation
-  - Add error handling for shader compilation
-
-#### Deliverables
-- ✅ Window opens and displays black screen
-- ✅ ESC key closes application
-- ✅ Console shows successful OpenGL context creation
-- ✅ Shader compilation works without errors
-
-#### Success Metrics
-- Project builds successfully on target platforms
-- No memory leaks or crashes during basic operation
-- Shader system ready for cube rendering
-
-### Week 2: Cube Rendering and Camera
-**Goal**: Render colored cubes with controllable camera
-
-#### Tasks
-- [ ] **Cube Mesh System**
-  - Define cube vertices and indices
-  - Create VAO/VBO/EBO for cube rendering
-  - Implement basic mesh rendering function
-  - Add mesh cleanup and resource management
-
-- [ ] **Camera System**
-  - Implement orbital camera around origin
-  - Add mouse drag for camera rotation
-  - Add mouse scroll for zoom in/out
-  - Set camera constraints (zoom limits, rotation bounds)
-
-- [ ] **Basic Rendering Pipeline**
-  - Create MVP matrix calculations
-  - Implement model/view/projection matrices
-  - Add basic lighting setup (flat lighting)
-  - Render multiple cubes with different colors
-
-#### Deliverables
-- ✅ Single cyan cube rendered at origin
-- ✅ Camera rotates around cube with mouse drag
-- ✅ Mouse scroll zooms camera in/out
-- ✅ Multiple colored cubes visible in scene
-
-#### Success Metrics
-- 60 FPS rendering with multiple cubes
-- Smooth camera movement without stuttering
-- Correct perspective projection
-
-### Week 3: Entity System and Basic Game Loop
-**Goal**: Implement ECS foundation and basic game state
-
-#### Tasks
-- [ ] **Entity Component System**
-  - Create Entity class with unique IDs
-  - Implement Component storage system
-  - Add Position, Render, and Health components
-  - Create basic component management functions
-
-- [ ] **Game State Management**
-  - Implement Game class with update/render loop
-  - Add basic game states (PLAYING, PAUSED)
-  - Create delta time calculation
-  - Add frame rate limiting (60 FPS cap)
-
-- [ ] **Basic Entity Rendering**
-  - Integrate ECS with rendering system
-  - Render entities with position and color components
-  - Add entity creation and destruction
-  - Implement basic entity management
-
-#### Deliverables
-- ✅ Game loop runs at 60 FPS
-- ✅ Entities can be created with components
-- ✅ Entities render at correct positions
-- ✅ Basic pause/resume functionality
-
-#### Success Metrics
-- ECS system handles 100+ entities efficiently
-- No memory leaks in entity creation/destruction
-- Stable frame rate with multiple entities
-
----
-
-## Phase 2: Core Gameplay (Weeks 4-6)
-
-### Week 4: Enemy System
-**Goal**: Create enemies that spawn and move toward center
-
-#### Tasks
-- [ ] **Enemy Entity Creation**
-  - Define EnemyComponent with health and speed
-  - Create enemy spawning system (sphere surface spawn)
-  - Implement random spawn position generation
-  - Add enemy visual properties (red cube with glow)
-
-- [ ] **Movement System**
-  - Implement linear movement toward center (0,0,0)
-  - Add delta time-based movement calculation
-  - Create movement constraints and bounds
-  - Add enemy speed configuration
-
-- [ ] **Enemy Management**
-  - Implement continuous enemy spawning (1 every 2 seconds)
-  - Add enemy lifetime management (destroy on center reach)
-  - Create enemy pool for performance optimization
-  - Add enemy counting and statistics
-
-#### Deliverables
-- ✅ Red cubes spawn on sphere surface around center
-- ✅ Enemies move in straight line toward center
-- ✅ Enemies disappear when reaching center
-- ✅ Spawn rate increases over time
-
-#### Success Metrics
-- 50+ enemies on screen without performance drop
-- Smooth movement without jittering
-- Consistent spawn timing
-
-### Week 5: Turret System
-**Goal**: Implement turret placement and firing mechanics
-
-#### Tasks
-- [ ] **Turret Placement**
-  - Implement mouse-to-3D coordinate conversion
-  - Add turret placement on mouse click
-  - Create turret visual properties (yellow cube)
-  - Add placement validation (no overlapping)
-
-- [ ] **Turret Targeting**
-  - Implement nearest enemy detection within range
-  - Add turret range visualization (optional wireframe)
-  - Create targeting line of sight checking
-  - Add turret rotation toward target
-
-- [ ] **Projectile System**
-  - Create projectile entities (white line/cube)
-  - Implement projectile movement and lifetime
-  - Add projectile-enemy collision detection
-  - Create projectile destruction on hit
-
-#### Deliverables
-- ✅ Click places yellow turret cube at cursor position
-- ✅ Turrets automatically target nearest enemy
-- ✅ White projectiles fire from turrets
-- ✅ Projectiles destroy enemies on contact
-
-#### Success Metrics
-- Turret placement feels responsive and accurate
-- Projectiles hit targets reliably
-- Multiple turrets can fire simultaneously
-
-### Week 6: Combat and Core Defense
-**Goal**: Complete core defense mechanics and game over
-
-#### Tasks
-- [ ] **Combat Integration**
-  - Implement enemy health system (1 HP)
-  - Add projectile damage system (1 damage)
-  - Create enemy destruction effects
-  - Add combat feedback (sound effects)
-
-- [ ] **Core Defense System**
-  - Implement core health system (100 HP)
-  - Add enemy-core collision detection
-  - Create core damage visualization
-  - Implement game over condition
-
-- [ ] **Resource System**
-  - Add energy points system (starting 50)
-  - Implement turret cost (10 energy)
-  - Add energy generation (+1 per second)
-  - Create energy display UI
-
-#### Deliverables
-- ✅ Enemies die when hit by projectiles
-- ✅ Core takes damage when enemies reach it
-- ✅ Game ends when core health reaches 0
-- ✅ Energy system limits turret placement
-
-#### Success Metrics
-- Combat feels satisfying and responsive
-- Game difficulty scales appropriately
-- Clear feedback for all actions
-
----
-
-## Phase 3: Polish and Optimization (Weeks 7-9)
-
-### Week 7: Visual Effects and Audio
-**Goal**: Enhance visual appeal and add audio feedback
-
-#### Tasks
-- [ ] **Visual Effects**
-  - Implement glow effects for all cubes
-  - Add particle effects for enemy destruction
-  - Create projectile trail effects
-  - Add core damage visual feedback
-
-- [ ] **Audio System**
-  - Integrate OpenAL or FMOD
-  - Add sound effects for all actions
-  - Implement audio volume controls
-  - Create audio resource management
-
-- [ ] **UI System**
-  - Add energy counter display
-  - Create core health bar
-  - Add score/enemy count display
-  - Implement pause menu overlay
-
-#### Deliverables
-- ✅ All cubes have neon glow effects
-- ✅ Sound effects play for all actions
-- ✅ UI shows game state information
-- ✅ Visual effects enhance gameplay feedback
-
-#### Success Metrics
-- Game feels polished and professional
-- Audio enhances gameplay without being distracting
-- UI is clear and informative
-
-### Week 8: Performance Optimization
-**Goal**: Optimize for target performance metrics
-
-#### Tasks
-- [ ] **Rendering Optimization**
-  - Implement instanced rendering for cubes
-  - Add frustum culling for off-screen objects
-  - Optimize shader performance
-  - Implement LOD system if needed
-
-- [ ] **Game Logic Optimization**
-  - Optimize collision detection algorithms
-  - Implement spatial partitioning for enemies
-  - Add object pooling for projectiles
-  - Optimize entity update loops
-
-- [ ] **Memory Management**
-  - Implement proper resource cleanup
-  - Add memory usage monitoring
-  - Optimize allocation patterns
-  - Fix any memory leaks
-
-#### Deliverables
-- ✅ 60 FPS maintained with 100+ entities
-- ✅ Memory usage stays under 200 MB
-- ✅ Load time under 3 seconds
-- ✅ No performance degradation over time
-
-#### Success Metrics
-- Consistent performance across different hardware
-- Smooth gameplay even with many objects
-- Efficient resource usage
-
-### Week 9: Input and Controls Refinement
-**Goal**: Perfect the 3D control scheme and user experience
-
-#### Tasks
-- [ ] **Camera Controls**
-  - Refine orbital camera behavior
-  - Add keyboard camera controls (WASD)
-  - Implement camera smoothing and constraints
-  - Add camera reset functionality
-
-- [ ] **Turret Placement**
-  - Improve 3D cursor positioning accuracy
-  - Add placement preview system
-  - Implement grid-based placement option
-  - Add placement validation feedback
-
-- [ ] **User Experience**
-  - Add keyboard shortcuts for common actions
-  - Implement mouse sensitivity settings
-  - Add control customization options
-  - Create control help overlay
-
-#### Deliverables
-- ✅ Intuitive 3D camera controls
-- ✅ Accurate turret placement
-- ✅ Customizable control scheme
-- ✅ Helpful user interface
-
-#### Success Metrics
-- Controls feel natural and responsive
-- New players can learn controls quickly
-- Advanced players can play efficiently
-
----
-
-## Phase 4: Final Integration (Weeks 10-12)
-
-### Week 10: Game Balance and Progression
-**Goal**: Fine-tune gameplay balance and difficulty curve
-
-#### Tasks
-- [ ] **Difficulty Scaling**
-  - Implement enemy spawn rate scaling
-  - Add enemy health scaling over time
-  - Create difficulty curve testing
-  - Balance energy generation vs. turret costs
-
-- [ ] **Gameplay Testing**
-  - Playtest core gameplay loop
-  - Gather feedback on difficulty
-  - Adjust spawn rates and enemy stats
-  - Test various player strategies
-
-- [ ] **Scoring System**
-  - Implement score calculation
-  - Add high score tracking
-  - Create score display system
-  - Add performance metrics
-
-#### Deliverables
-- ✅ Balanced difficulty progression
-- ✅ Engaging gameplay for 10+ minutes
-- ✅ Score system encourages replay
-- ✅ Multiple viable strategies
-
-#### Success Metrics
-- Game remains challenging but fair
-- Players feel motivated to improve
-- Different playstyles are viable
-
-### Week 11: Platform Integration and Build
-**Goal**: Prepare for distribution and testing
-
-#### Tasks
-- [ ] **Build System**
-  - Create release build configuration
-  - Implement asset packaging
-  - Add version information
-  - Create installer/package scripts
-
-- [ ] **Platform Testing**
-  - Test on Windows 10/11
-  - Test on Linux (Ubuntu 20.04+)
-  - Verify performance on target hardware
-  - Test with different graphics drivers
-
-- [ ] **Documentation**
-  - Create user manual
-  - Document controls and gameplay
-  - Add troubleshooting guide
-  - Create developer documentation
-
-#### Deliverables
-- ✅ Working builds for all target platforms
-- ✅ Complete user documentation
-- ✅ Performance verified on target hardware
-- ✅ Ready for distribution
-
-#### Success Metrics
-- Builds work reliably on target platforms
-- Documentation is clear and complete
-- No critical bugs in release build
-
-### Week 12: Final Polish and Release Preparation
-**Goal**: Final testing and release preparation
-
-#### Tasks
-- [ ] **Final Testing**
-  - Comprehensive bug testing
-  - Performance testing on various hardware
-  - User experience testing
-  - Stress testing with extended play
-
-- [ ] **Release Preparation**
-  - Create release notes
-  - Prepare marketing materials
-  - Set up distribution channels
-  - Plan post-release support
-
-- [ ] **Future Planning**
-  - Document known issues
-  - Plan post-MVP features
-  - Create development roadmap
-  - Set up community channels
-
-#### Deliverables
-- ✅ Bug-free release candidate
-- ✅ Complete release package
-- ✅ Post-MVP development plan
-- ✅ Community support structure
-
-#### Success Metrics
-- Game is ready for public release
-- All major bugs are fixed
-- Future development is planned
-
----
-
-## Technical Milestones
-
-### Milestone 1: Visual Foundation (Week 3)
-- ✅ 3D rendering pipeline working
-- ✅ Camera controls functional
-- ✅ Basic ECS system implemented
-- ✅ Entity rendering operational
-
-### Milestone 2: Core Gameplay (Week 6)
-- ✅ Enemy spawning and movement
-- ✅ Turret placement and firing
-- ✅ Combat system functional
-- ✅ Game over condition working
-
-### Milestone 3: Polished Experience (Week 9)
-- ✅ Visual effects and audio
-- ✅ Performance optimized
-- ✅ Controls refined
-- ✅ UI system complete
-
-### Milestone 4: Release Ready (Week 12)
-- ✅ Game balanced and tested
-- ✅ Multi-platform builds ready
-- ✅ Documentation complete
-- ✅ Distribution prepared
-
----
-
-## Risk Management
-
-### High Priority Risks
-1. **3D Controls Complexity**
-   - *Mitigation*: Start with simple controls, iterate based on testing
-   - *Contingency*: Implement 2D projection mode as fallback
-
-2. **Performance with Many Entities**
-   - *Mitigation*: Implement spatial partitioning early
-   - *Contingency*: Add entity limits if needed
-
-3. **Cross-Platform Compatibility**
-   - *Mitigation*: Test on target platforms weekly
-   - *Contingency*: Focus on single platform initially
-
-### Medium Priority Risks
-1. **Shader Compatibility**
-   - *Mitigation*: Use widely supported OpenGL features
-   - *Contingency*: Provide fallback shaders
-
-2. **Audio System Integration**
-   - *Mitigation*: Use simple audio library
-   - *Contingency*: Make audio optional
-
-### Low Priority Risks
-1. **Visual Style Implementation**
-   - *Mitigation*: Start with basic colors, add effects later
-   - *Contingency*: Simplify visual requirements
-
----
-
-## Success Metrics
-
-### Technical Metrics
-- ✅ 60 FPS stable performance
-- ✅ < 200 MB memory usage
-- ✅ < 3 second load time
-- ✅ < 50 MB binary size
-
-### Gameplay Metrics
-- ✅ 10+ minute average play session
-- ✅ < 30 second learning curve
-- ✅ Multiple viable strategies
-- ✅ Engaging difficulty progression
-
-### User Experience Metrics
-- ✅ Intuitive 3D controls
-- ✅ Clear visual feedback
-- ✅ Responsive gameplay
-- ✅ Professional polish level
-
----
-
-*Document Version: 1.0 - Implementation Plan*
+# План Реализации: CORE
+
+## Обзор Проекта
+
+**CORE** — это минималистичная 3D Tower Defense игра, вдохновленная эстетикой TRON. Этот план описывает разработку первой версии Minimum Viable Product (MVP), фокусируясь на основных механиках геймплея и техническом фундаменте.
+
+## Цели MVP
+
+### Основные Задачи
+1. **Функциональный 3D Tower Defense геймплей**
+2. **TRON-вдохновленная визуальная эстетика**
+3. **Плавная производительность 60 FPS**
+4. **Интуитивное 3D управление**
+5. **Полный игровой цикл**
+
+### Критерии Успеха
+- Игроки могут размещать турели в 3D пространстве
+- Враги появляются и движутся к центру
+- Турели автоматически наводятся и уничтожают врагов
+- Игра работает плавно на целевом оборудовании
+- Визуальный стиль соответствует эстетике TRON
+
+## Фазы Разработки
+
+### Фаза 1: Основы Движка (Недели 1-2)
+
+#### 1.1 Настройка Проекта
+- [x] Инициализация структуры проекта CMake
+- [x] Настройка управления пакетами vcpkg
+- [x] Конфигурация системы сборки
+- [x] Настройка контроля версий
+
+#### 1.2 Основные Компоненты Движка
+- [x] Создание окна с GLFW
+- [x] Инициализация контекста OpenGL 3.3
+- [x] Базовый конвейер рендеринга
+- [x] Система обработки ввода
+- [x] Система управления временем
+
+#### 1.3 Графический Фундамент
+- [x] Система компиляции шейдеров
+- [x] Базовый рендеринг мешей
+- [x] Реализация системы камеры
+- [x] Режим wireframe рендеринга
+
+**Результаты**:
+- Функциональное окно с контекстом OpenGL
+- Базовый рендеринг геометрических форм
+- Обработка ввода с клавиатуры и мыши
+
+### Фаза 2: Система 3D Рендеринга (Недели 3-4)
+
+#### 2.1 Конвейер 3D Графики
+- [x] 3D матрицы трансформации
+- [x] Перспективная проекция
+- [x] Тестирование глубины
+- [x] Рендеринг wireframe кубов
+
+#### 2.2 Система Камеры
+- [x] Орбитальное управление камерой
+- [x] Вращение на основе мыши
+- [x] Функциональность зума
+- [x] Плавное движение камеры
+
+#### 2.3 Система Ray Casting
+- [x] Преобразование экранных координат в мировые
+- [x] Пересечение 3D плоскостей
+- [x] Расчет пересечения с землей
+- [x] Система 3D плоскостей размещения
+
+**Результаты**:
+- Полностью функциональная 3D камера
+- 3D рендеринг wireframe кубов
+- Система 3D взаимодействий
+
+### Фаза 3: Основы Игровой Логики (Недели 5-6)
+
+#### 3.1 Система Сущностей
+- [x] Реализация базового класса сущности
+- [x] Управление трансформациями
+- [x] Управление жизненным циклом
+- [x] Циклы обновления и рендеринга
+
+#### 3.2 Система Врагов
+- [x] Реализация сущности врага
+- [x] Движение к центру
+- [x] Система здоровья и урона
+- [x] Обнаружение столкновений
+
+#### 3.3 Спавн Врагов
+- [x] Случайные позиции спавна на сфере
+- [x] Настраиваемые скорости спавна
+- [x] Управление жизненным циклом врагов
+- [x] Конфигурация радиуса спавна
+
+**Результаты**:
+- Функциональные сущности врагов
+- Система спавна врагов
+- Базовое обнаружение столкновений
+
+### Фаза 4: Система Турелей (Недели 7-8)
+
+#### 4.1 Реализация Турелей
+- [x] Класс сущности турели
+- [x] Система размещения турелей
+- [x] Правила валидации размещения
+- [x] Система визуальной обратной связи
+
+#### 4.2 Размещение Турелей
+- [x] 3D размещение в пространстве
+- [x] Ограничения размещения
+- [x] Система предпросмотра
+- [x] Подтверждение размещения
+
+#### 4.3 Управление Турелями
+- [x] Управление коллекцией турелей
+- [x] Валидация размещения
+- [x] Расчеты расстояний
+- [x] Управление состоянием турелей
+
+**Результаты**:
+- Функциональное размещение турелей
+- Валидация 3D размещения
+- Визуальная обратная связь размещения
+
+### Фаза 5: Система Боя (Недели 9-10)
+
+#### 5.1 Система Наведения
+- [x] Автоматическое наведение на врагов
+- [x] Наведение на основе дальности
+- [x] Выбор ближайшего врага
+- [x] Отслеживание цели
+
+#### 5.2 Система Проектилей
+- [x] Реализация сущности проектиля
+- [x] Физика проектилей
+- [x] Поведение самонаведения
+- [x] Обнаружение столкновений
+
+#### 5.3 Механики Боя
+- [x] Применение урона
+- [x] Обработка смерти врагов
+- [x] Время жизни проектилей
+- [x] Обнаружение попаданий
+
+**Результаты**:
+- Функциональная система боя
+- Самонаводящиеся проектили
+- Полная система урона
+
+### Фаза 6: Полировка и Оптимизация (Недели 11-12)
+
+#### 6.1 Визуальная Полировка
+- [x] Реализация цветовой схемы TRON
+- [x] Оптимизация wireframe рендеринга
+- [x] Улучшения визуальной обратной связи
+- [x] Эстетические доработки
+
+#### 6.2 Оптимизация Производительности
+- [x] Object pooling для проектилей
+- [x] Эффективный конвейер рендеринга
+- [x] Оптимизация управления памятью
+- [x] Оптимизация частоты кадров
+
+#### 6.3 Пользовательский Опыт
+- [x] Интуитивное управление
+- [x] Отзывчивая обработка ввода
+- [x] Плавное движение камеры
+- [x] Системы визуальной обратной связи
+
+**Результаты**:
+- Полированная визуальная презентация
+- Оптимизированная производительность
+- Плавный пользовательский опыт
+
+## Детали Технической Реализации
+
+### Архитектура Основных Систем
+
+```
+CORE/
+├── src/
+│   ├── main.cpp                 # Точка входа
+│   ├── core/                    # Ядро движка
+│   │   ├── engine.h/cpp         # Главный класс движка
+│   │   ├── window.h/cpp         # Управление окном
+│   │   ├── input.h/cpp          # Обработка ввода
+│   │   └── time.h/cpp           # Управление временем
+│   ├── graphics/                # Графическая система
+│   │   ├── renderer.h/cpp       # Рендеринг
+│   │   ├── camera.h/cpp         # Камера
+│   │   ├── shader.h/cpp         # Шейдеры
+│   │   ├── mesh.h/cpp           # 3D меши
+│   │   └── ray_caster.h/cpp     # Ray casting
+│   ├── game/                    # Игровая логика
+│   │   ├── game.h/cpp           # Главный игровой класс
+│   │   ├── entity.h/cpp         # Базовая сущность
+│   │   ├── enemy.h/cpp          # Враги
+│   │   ├── enemy_spawner.h/cpp  # Спавн врагов
+│   │   ├── turret.h/cpp         # Турели
+│   │   ├── turret_manager.h/cpp # Управление турелями
+│   │   ├── turret_preview.h/cpp # Предпросмотр турелей
+│   │   ├── projectile.h/cpp     # Проектили
+│   │   └── projectile_manager.h/cpp # Управление проектилями
+│   └── utils/                   # Утилиты
+│       └── math.h/cpp           # Математические функции
+├── assets/
+│   └── shaders/                 # Шейдеры
+│       ├── basic.vert           # Вертексный шейдер
+│       └── basic.frag           # Фрагментный шейдер
+└── CMakeLists.txt               # Конфигурация сборки
+```
+
+### Ключевые Технические Решения
+
+#### 1. Выбор Графического API
+- **OpenGL 3.3**: Кроссплатформенная совместимость
+- **GLFW**: Управление окнами и вводом
+- **GLM**: Библиотека математики
+- **GLAD**: Загрузчик OpenGL
+
+#### 2. Паттерн Архитектуры
+- **Компонентно-ориентированный**: Модульный дизайн системы
+- **Entity-System**: Управление игровыми объектами
+- **Умные Указатели**: Современное управление памятью C++
+- **RAII**: Управление ресурсами
+
+#### 3. Стратегия Производительности
+- **Object Pooling**: Эффективное использование памяти
+- **Batch Rendering**: Оптимизированные вызовы отрисовки
+- **Wireframe Rendering**: Упрощенная графика
+- **Efficient Collision**: Простое сферическое обнаружение
+
+### Механики Геймплея
+
+#### Основной Игровой Цикл
+1. **Спавн Врагов**: Враги появляются на сфере вокруг карты
+2. **Движение Врагов**: Прямой путь к центральному кубу
+3. **Размещение Турелей**: Игрок размещает турели в 3D пространстве
+4. **Бой**: Турели автоматически наводятся и стреляют
+5. **Защита**: Предотвращение достижения врагами центра
+
+#### Правила Размещения Турелей
+- **Минимальное расстояние от центра**: 5 единиц
+- **Максимальное расстояние от центра**: 20 единиц
+- **Минимальное расстояние между турелями**: 3 единицы
+- **3D размещение**: Любая позиция в 3D пространстве
+
+#### Система Боя
+- **Дальность турели**: 15 единиц
+- **Урон турели**: 25 HP за выстрел
+- **Скорострельность**: 1 выстрел в секунду
+- **Скорость проектиля**: 30 единиц/сек
+- **Радиус попадания**: 1.0 единица
+
+### Визуальный Дизайн
+
+#### Эстетика TRON
+- **Цветовая схема**: Циан, красный, зеленый на черном фоне
+- **Формы**: Только геометрические wireframe объекты
+- **Эффекты**: Неоновые светящиеся эффекты
+- **Стиль**: Минималистичный, киберпанк
+
+#### Цвета Объектов
+- **Центральный куб**: Циан wireframe
+- **Враги**: Красные wireframe кубы
+- **Турели**: Зеленые wireframe кубы
+- **Проектили**: Циановые wireframe кольца
+- **Фон**: Чистый черный пустой космос
+
+## Стратегия Тестирования
+
+### Модульное Тестирование
+- **Система сущностей**: Тестирование отдельных компонентов
+- **Математические утилиты**: Валидация математических функций
+- **Обнаружение столкновений**: Точность обнаружения попаданий
+- **Обработка ввода**: Управление состоянием ввода
+
+### Интеграционное Тестирование
+- **Графический конвейер**: Интеграция системы рендеринга
+- **Игровой цикл**: Тестирование полного цикла игры
+- **Производительность**: Частота кадров и использование памяти
+- **Пользовательское взаимодействие**: Отзывчивость управления
+
+### Тестирование Производительности
+- **Частота кадров**: Целевая 60 FPS
+- **Использование памяти**: <100MB RAM
+- **Время загрузки**: <3 секунд запуска
+- **Стабильность**: Долгосрочное тестирование игры
+
+## Оценка Рисков
+
+### Технические Риски
+- **Совместимость OpenGL**: Смягчено загрузчиком GLAD
+- **Проблемы производительности**: Решены через оптимизацию
+- **Утечки памяти**: Предотвращены умными указателями
+- **Совместимость платформ**: Протестировано на целевых платформах
+
+### Риски Разработки
+- **Расширение области**: Строгий фокус на MVP
+- **Задержки временной шкалы**: Включено буферное время
+- **Техническая сложность**: Поэтапный подход к разработке
+- **Ограничения ресурсов**: Эффективные практики разработки
+
+## Метрики Успеха
+
+### Технические Метрики
+- **Производительность**: 60 FPS на целевом оборудовании
+- **Стабильность**: Геймплей без сбоев
+- **Память**: Эффективное использование памяти
+- **Время загрузки**: Быстрый запуск
+
+### Игровые Метрики
+- **Вовлеченность**: Игроки продолжают играть
+- **Глубина стратегии**: Множественные жизнеспособные стратегии
+- **Сложность**: Подходящий уровень вызова
+- **Переиграемость**: Долгосрочная вовлеченность
+
+## Будущие Улучшения
+
+### Функции После MVP
+- **Система волн**: Увеличивающиеся волны сложности
+- **Множественные типы турелей**: Различные разновидности турелей
+- **Усиления**: Временные улучшения
+- **Улучшения UI**: Лучший пользовательский интерфейс
+- **Интеграция звука**: Аудио система
+- **Разнообразие уровней**: Множественные макеты карт
+
+### Долгосрочное Видение
+- **Мультиплеер**: Кооперативный геймплей
+- **Редактор уровней**: Создание пользовательских карт
+- **Поддержка модов**: Контент сообщества
+- **Расширение платформ**: Дополнительные платформы
+- **Поддержка VR**: Адаптация виртуальной реальности
+
+## Заключение
+
+План MVP для CORE обеспечивает структурированный подход к разработке функциональной 3D Tower Defense игры с эстетикой TRON. Поэтапный подход к разработке обеспечивает стабильный прогресс при сохранении фокуса на основных механиках геймплея и техническом совершенстве.
+
+Ключевые факторы успеха:
+- **Четкая техническая архитектура**
+- **Поэтапный подход к разработке**
+- **Фокус на оптимизации производительности**
+- **Акцент на пользовательском опыте**
+- **Расширяемый дизайн для будущих функций**
+
+План балансирует техническую сложность с достижимыми вехами, обеспечивая доставку MVP, который предоставляет полный и увлекательный игровой опыт, обеспечивая при этом прочную основу для будущего развития.
