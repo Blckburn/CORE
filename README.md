@@ -1,224 +1,226 @@
 # CORE - Minimalist 3D Tower Defense
 
+[🇷🇺 Русская версия](https://github.com/Blckburn/CORE/blob/master/README_RU.md) | [🇺🇸 English Version](#)
+
 ![CORE Game](https://img.shields.io/badge/Game-CORE-blue)
 ![C++](https://img.shields.io/badge/C%2B%2B-17-red)
 ![OpenGL](https://img.shields.io/badge/OpenGL-3.3-green)
 ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey)
 
-## 🎮 Обзор
+## 🎮 Overview
 
-**CORE** - это минималистичная 3D Tower Defense игра в стиле киберпанк wireframe эстетики. Игроки защищают центральный куб от нападающих вражеских кубов, размещая башни в трехмерном пространстве.
+**CORE** is a minimalist 3D Tower Defense game featuring cyberpunk wireframe aesthetics. Players defend a central cube from attacking enemy cubes by placing turrets in three-dimensional space.
 
-### ✨ Основные Особенности
+### ✨ Key Features
 
-- **🌐 3D Пространство**: Полностью трехмерная игровая среда
-- **⚡ Киберпанк Эстетика**: Неоновые wireframe объекты на черном фоне
-- **🏗️ Система Башен**: Размещение и управление башнями в 3D
-- **🎯 Homing Снаряды**: Умные снаряды в виде колец
-- **📷 Управление Камерой**: Полноценное 3D управление камерой
-- **🎨 Минималистичный Дизайн**: Только геометрические формы
+- **🌐 3D Space**: Fully three-dimensional game environment
+- **⚡ Cyberpunk Aesthetics**: Neon wireframe objects on black background
+- **🏗️ Turret System**: Placement and management of turrets in 3D
+- **🎯 Homing Projectiles**: Smart ring-shaped projectiles
+- **📷 Camera Control**: Full 3D camera control
+- **🎨 Minimalist Design**: Only geometric shapes
 
-## 🚀 Быстрый Старт
+## 🚀 Quick Start
 
-### Предварительные Требования
+### Prerequisites
 
 - **Windows 10/11**
-- **Visual Studio 2019+** или **Visual Studio Build Tools**
+- **Visual Studio 2019+** or **Visual Studio Build Tools**
 - **CMake 3.16+**
 - **Git**
 
-### Установка
+### Installation
 
-1. **Клонируйте репозиторий**:
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/Blckburn/CORE.git
    cd CORE
    ```
 
-2. **Инициализируйте vcpkg**:
+2. **Initialize vcpkg**:
    ```bash
    cd vcpkg
    ./bootstrap-vcpkg.bat
    ```
 
-3. **Установите зависимости**:
+3. **Install dependencies**:
    ```bash
    vcpkg install glfw3:x64-windows
    vcpkg install glad:x64-windows
    vcpkg install glm:x64-windows
    ```
 
-4. **Соберите проект**:
+4. **Build the project**:
    ```bash
    cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
    cmake --build build --config Release
    ```
 
-5. **Запустите игру**:
+5. **Run the game**:
    ```bash
    ./build/Release/CORE.exe
    ```
 
-## 🎮 Управление
+## 🎮 Controls
 
-| Действие | Клавиша |
-|----------|---------|
-| **Вращение камеры** | `WASD` или `ПКМ + движение мыши` |
-| **Зум** | `Колесо мыши` или `Q/E` |
-| **Режим размещения башен** | `T` |
-| **Размещение башни** | `ЛКМ` (в режиме размещения) |
-| **Изменение расстояния размещения** | `+/-` (в режиме размещения) |
+| Action | Key |
+|--------|-----|
+| **Camera rotation** | `WASD` or `RMB + mouse movement` |
+| **Zoom** | `Mouse wheel` or `Q/E` |
+| **Turret placement mode** | `T` |
+| **Place turret** | `LMB` (in placement mode) |
+| **Adjust placement distance** | `+/-` (in placement mode) |
 
-## 🏗️ Архитектура
+## 🏗️ Architecture
 
-### Структура Проекта
+### Project Structure
 
 ```
 CORE/
 ├── src/
-│   ├── core/           # Ядро движка
-│   ├── graphics/       # Графическая система
-│   ├── game/          # Игровая логика
-│   └── utils/         # Утилиты
+│   ├── core/           # Engine core
+│   ├── graphics/       # Graphics system
+│   ├── game/          # Game logic
+│   └── utils/         # Utilities
 ├── assets/
-│   └── shaders/       # Шейдеры
-├── vcpkg/             # Менеджер пакетов
-└── build/             # Собранные файлы
+│   └── shaders/       # Shaders
+├── vcpkg/             # Package manager
+└── build/             # Build files
 ```
 
-### Основные Компоненты
+### Core Components
 
-- **🎯 Engine**: Главный класс движка
-- **🖼️ Renderer**: Система рендеринга OpenGL
-- **📷 Camera**: 3D камера с орбитальным управлением
-- **👾 Enemy System**: Враги и их спавн
-- **🏗️ Turret System**: Башни и их управление
-- **💥 Projectile System**: Снаряды с homing поведением
+- **🎯 Engine**: Main engine class
+- **🖼️ Renderer**: OpenGL rendering system
+- **📷 Camera**: 3D camera with orbital controls
+- **👾 Enemy System**: Enemies and spawning
+- **🏗️ Turret System**: Turrets and management
+- **💥 Projectile System**: Homing projectiles
 
-## 🎨 Визуальный Стиль
+## 🎨 Visual Style
 
-### Цветовая Схема
+### Color Scheme
 
-- **Центральный куб**: Циан wireframe
-- **Враги**: Красные wireframe кубы
-- **Башни**: Зеленые wireframe кубы
-- **Снаряды**: Циановые wireframe кольца
-- **Фон**: Чистый черный
+- **Central cube**: Cyan wireframe
+- **Enemies**: Red wireframe cubes
+- **Turrets**: Green wireframe cubes
+- **Projectiles**: Cyan wireframe rings
+- **Background**: Pure black
 
-### Киберпанк Wireframe Эстетика
+### Cyberpunk Wireframe Aesthetics
 
-- Только прямые линии и геометрические формы
-- Неоновые светящиеся эффекты
-- Минималистичный дизайн
-- Cyberpunk атмосфера
+- Only straight lines and geometric shapes
+- Neon glowing effects
+- Minimalist design
+- 80s synthwave atmosphere
 
-## 🎯 Игровая Механика
+## 🎯 Game Mechanics
 
-### Цель Игры
+### Game Objective
 
-Защитите центральный куб от волн вражеских кубов, размещая башни в стратегических позициях.
+Defend the central cube from waves of enemy cubes by strategically placing turrets.
 
-### Система Башен
+### Turret System
 
-- **Дальность**: 15 единиц
-- **Урон**: 25 HP за выстрел
-- **Скорострельность**: 1 выстрел в секунду
-- **Автоматическое наведение**: На ближайшего врага в радиусе
+- **Range**: 15 units
+- **Damage**: 25 HP per shot
+- **Fire rate**: 1 shot per second
+- **Auto-targeting**: Targets nearest enemy in range
 
-### Система Врагов
+### Enemy System
 
-- **Здоровье**: 100 HP
-- **Скорость**: 5 единиц/сек
-- **Спавн**: 1 враг в секунду
-- **Поведение**: Движение к центру карты
+- **Health**: 100 HP
+- **Speed**: 5 units/sec
+- **Spawn rate**: 1 enemy per second
+- **Behavior**: Move toward center of map
 
-### Система Снарядов
+### Projectile System
 
-- **Homing**: Автоматическое наведение на врагов
-- **Скорость**: 30 единиц/сек
-- **Радиус попадания**: 1.0 единица
-- **Время жизни**: 3 секунды
+- **Homing**: Automatic enemy targeting
+- **Speed**: 30 units/sec
+- **Hit radius**: 1.0 unit
+- **Lifetime**: 3 seconds
 
-## 🔧 Технические Детали
+## 🔧 Technical Details
 
-### Технологии
+### Technologies
 
-- **C++17**: Основной язык программирования
-- **OpenGL 3.3**: Графический API
-- **GLFW**: Управление окнами и вводом
-- **GLM**: Математическая библиотека
-- **CMake**: Система сборки
-- **vcpkg**: Менеджер пакетов
+- **C++17**: Primary programming language
+- **OpenGL 3.3**: Graphics API
+- **GLFW**: Window and input management
+- **GLM**: Mathematics library
+- **CMake**: Build system
+- **vcpkg**: Package manager
 
-### Системные Требования
+### System Requirements
 
 - **OS**: Windows 10/11
-- **GPU**: Поддержка OpenGL 3.3+
+- **GPU**: OpenGL 3.3+ support
 - **RAM**: 512 MB
 - **Storage**: 100 MB
 
-## 📚 Документация
+## 📚 Documentation
 
-- **[Техническая Документация](TECHNICAL_DOCUMENTATION.md)** - Подробное описание архитектуры
-- **[Game Design Document](WIKI/Core_Game_Design_Document.md)** - Концепция игры
-- **[Technical Architecture](WIKI/Technical_Architecture_Specification.md)** - Техническая архитектура
-- **[MVP Roadmap](WIKI/Implementation_Roadmap.md)** - План разработки
+- **[Technical Documentation](TECHNICAL_DOCUMENTATION.md)** - Detailed architecture description
+- **[Game Design Document](WIKI/ENG_Game_Design_Document.md)** - Game concept
+- **[Technical Architecture](WIKI/ENG_Technical_Architecture_Document.md)** - Technical architecture
+- **[MVP Roadmap](WIKI/ENG_MVP_Roadmap.md)** - Development plan
 
-## 🚧 Текущий Статус
+## 🚧 Current Status
 
-### ✅ Реализовано
+### ✅ Implemented
 
-- [x] Базовый движок
-- [x] 3D рендеринг
-- [x] Система врагов
-- [x] Система башен
-- [x] Система снарядов
-- [x] Управление камерой
-- [x] 3D размещение башен
+- [x] Basic engine
+- [x] 3D rendering
+- [x] Enemy system
+- [x] Turret system
+- [x] Projectile system
+- [x] Camera controls
+- [x] 3D turret placement
 
-### 🚧 В Разработке
+### 🚧 In Development
 
-- [ ] Дополнительные типы башен
-- [ ] Система волн
-- [ ] UI интерфейс
-- [ ] Звуковые эффекты
+- [ ] Additional turret types
+- [ ] Wave system
+- [ ] UI interface
+- [ ] Sound effects
 
-### 📋 Планируется
+### 📋 Planned
 
-- [ ] Система улучшений
-- [ ] Множественные уровни
-- [ ] Система достижений
-- [ ] Мультиплеер
+- [ ] Upgrade system
+- [ ] Multiple levels
+- [ ] Achievement system
+- [ ] Multiplayer
 
-## 🤝 Вклад в Проект
+## 🤝 Contributing
 
-Мы приветствуем вклад в развитие проекта! Пожалуйста:
+We welcome contributions to the CORE project! Please:
 
-1. Форкните репозиторий
-2. Создайте ветку для новой функции (`git checkout -b feature/AmazingFeature`)
-3. Зафиксируйте изменения (`git commit -m 'Add some AmazingFeature'`)
-4. Отправьте в ветку (`git push origin feature/AmazingFeature`)
-5. Откройте Pull Request
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## 📄 Лицензия
+## 📄 License
 
-Этот проект распространяется под лицензией MIT. См. файл `LICENSE` для подробностей.
+This project is licensed under the MIT License. See the `LICENSE` file for details.
 
-## 👨‍💻 Авторы
+## 👨‍💻 Authors
 
-- **Blckburn** - *Основная разработка* - [GitHub](https://github.com/Blckburn)
+- **Blckburn** - *Main development* - [GitHub](https://github.com/Blckburn)
 
-## 🙏 Благодарности
+## 🙏 Acknowledgments
 
-- [GLFW](https://www.glfw.org/) - Управление окнами
-- [GLM](https://github.com/g-truc/glm) - Математическая библиотека
-- [OpenGL](https://www.opengl.org/) - Графический API
-- Сообщество разработчиков игр
+- [GLFW](https://www.glfw.org/) - Window management
+- [GLM](https://github.com/g-truc/glm) - Mathematics library
+- [OpenGL](https://www.opengl.org/) - Graphics API
+- Game development community
 
-## 📞 Контакты
+## 📞 Contact
 
-- **GitHub Issues**: [Создать Issue](https://github.com/Blckburn/CORE/issues)
-- **Discussions**: [Обсуждения](https://github.com/Blckburn/CORE/discussions)
+- **GitHub Issues**: [Create Issue](https://github.com/Blckburn/CORE/issues)
+- **Discussions**: [Discussions](https://github.com/Blckburn/CORE/discussions)
 
 ---
 
