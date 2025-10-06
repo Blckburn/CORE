@@ -59,6 +59,7 @@ Thumbs.db
 *.swo
 
 # vcpkg
+vcpkg/
 vcpkg/installed/
 vcpkg/buildtrees/
 vcpkg/downloads/
