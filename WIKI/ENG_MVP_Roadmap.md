@@ -2,13 +2,13 @@
 
 ## Project Overview
 
-**CORE** is a minimalist 3D Tower Defense game inspired by TRON aesthetics. This roadmap outlines the development plan for the first Minimum Viable Product (MVP) version, focusing on core gameplay mechanics and technical foundation.
+**CORE** is a minimalist 3D Tower Defense game featuring cyberpunk wireframe aesthetics. This roadmap outlines the development plan for the first Minimum Viable Product (MVP) version, focusing on core gameplay mechanics and technical foundation.
 
 ## MVP Goals
 
 ### Primary Objectives
 1. **Functional 3D Tower Defense gameplay**
-2. **TRON-inspired visual aesthetics**
+2. **Cyberpunk wireframe visual aesthetics**
 3. **Smooth 60 FPS performance**
 4. **Intuitive 3D controls**
 5. **Complete game loop**
@@ -18,7 +18,7 @@
 - Enemies spawn and move towards the center
 - Turrets automatically target and destroy enemies
 - Game runs smoothly on target hardware
-- Visual style matches TRON aesthetic
+- Visual style matches cyberpunk wireframe aesthetic
 
 ## Development Phases
 
@@ -255,11 +255,11 @@ CORE/
 
 ### Visual Design
 
-#### TRON Aesthetic
+#### Cyberpunk Wireframe Aesthetic
 - **Color scheme**: Cyan, red, green on black background
 - **Shapes**: Only geometric wireframe objects
 - **Effects**: Subtle neon glow effects
-- **Style**: Minimalist, cyberpunk
+- **Style**: Minimalist, cyberpunk, 80s synthwave-inspired
 
 #### Object Colors
 - **Central cube**: Cyan wireframe

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**CORE** is a minimalist 3D Tower Defense game built with a custom C++ engine. The project emphasizes clean architecture, modern C++ practices, and performance optimization while maintaining the TRON-inspired aesthetic and 3D gameplay mechanics.
+**CORE** is a minimalist 3D Tower Defense game built with a custom C++ engine. The project emphasizes clean architecture, modern C++ practices, and performance optimization while maintaining the cyberpunk wireframe aesthetic and 3D gameplay mechanics.
 
 ## Engine Architecture
 

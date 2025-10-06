@@ -20,11 +20,11 @@ This documentation suite provides detailed information about the CORE project, c
 
 ## 🎮 Project Overview
 
-**CORE** is a minimalist 3D Tower Defense game inspired by TRON aesthetics. Players defend a central cube from incoming enemy cubes by placing turrets in three-dimensional space.
+**CORE** is a minimalist 3D Tower Defense game featuring cyberpunk wireframe aesthetics. Players defend a central cube from incoming enemy cubes by placing turrets in three-dimensional space.
 
 ### Key Features
 - **3D Tower Defense**: Unique three-dimensional gameplay
-- **TRON Aesthetics**: Distinctive wireframe visual style
+- **Cyberpunk Aesthetics**: Distinctive wireframe visual style
 - **Strategic Gameplay**: Complex 3D positioning decisions
 - **Modern Engine**: Custom C++ engine with OpenGL rendering
 

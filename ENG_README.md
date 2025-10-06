@@ -7,12 +7,12 @@
 
 ## 🎮 Overview
 
-**CORE** is a minimalist 3D Tower Defense game inspired by TRON aesthetics. Players defend a central cube from attacking enemy cubes by placing turrets in three-dimensional space.
+**CORE** is a minimalist 3D Tower Defense game featuring cyberpunk wireframe aesthetics. Players defend a central cube from attacking enemy cubes by placing turrets in three-dimensional space.
 
 ### ✨ Key Features
 
 - **🌐 3D Space**: Fully three-dimensional game environment
-- **⚡ TRON Aesthetics**: Neon wireframe objects on black background
+- **⚡ Cyberpunk Aesthetics**: Neon wireframe objects on black background
 - **🏗️ Turret System**: Placement and management of turrets in 3D
 - **🎯 Homing Projectiles**: Smart ring-shaped projectiles
 - **📷 Camera Control**: Full 3D camera control
@@ -105,12 +105,12 @@ CORE/
 - **Projectiles**: Cyan wireframe rings
 - **Background**: Pure black
 
-### TRON Aesthetics
+### Cyberpunk Wireframe Aesthetics
 
 - Only straight lines and geometric shapes
 - Neon glowing effects
 - Minimalist design
-- Cyberpunk atmosphere
+- 80s synthwave atmosphere
 
 ## 🎯 Game Mechanics
 

@@ -3,21 +3,21 @@
 ## 1. Game Overview
 
 ### 1.1 Core Concept
-**CORE** is a minimalist 3D Tower Defense game inspired by TRON aesthetics. Players defend a central cube from incoming enemy cubes that attack from all three-dimensional planes. The game emphasizes strategic gameplay over visual complexity, featuring a cyberpunk aesthetic with neon glows, geometric shapes, and a pure black void environment.
+**CORE** is a minimalist 3D Tower Defense game featuring cyberpunk wireframe aesthetics. Players defend a central cube from incoming enemy cubes that attack from all three-dimensional planes. The game emphasizes strategic gameplay over visual complexity, featuring a cyberpunk aesthetic inspired by 80s synthwave culture with neon glows, geometric shapes, and a pure black void environment.
 
 ### 1.2 Genre
 - **Primary**: 3D Tower Defense
 - **Secondary**: Strategy, Action
-- **Aesthetic**: Minimalist, Cyberpunk, TRON-inspired
+- **Aesthetic**: Minimalist, Cyberpunk, 80s synthwave-inspired
 
 ### 1.3 Target Audience
 - **Primary**: Strategy game enthusiasts (18-35 years)
-- **Secondary**: TRON fans, minimalist design lovers
+- **Secondary**: Cyberpunk enthusiasts, minimalist design lovers
 - **Platform**: PC (Windows)
 
 ### 1.4 Unique Selling Points
 - **3D Tower Defense**: Unique three-dimensional gameplay
-- **TRON Aesthetics**: Distinctive visual style
+- **Cyberpunk Aesthetics**: Distinctive visual style
 - **Minimalist Design**: Clean, focused gameplay
 - **Strategic Depth**: Complex 3D positioning decisions
 
@@ -128,7 +128,7 @@
 ### 6.2 Music
 - **Ambient**: Electronic ambient tracks
 - **Combat**: Intensified electronic beats
-- **Style**: TRON-inspired electronic music
+- **Style**: 80s synthwave-inspired electronic music
 
 ## 7. User Interface
 
@@ -204,7 +204,7 @@
 
 ## 12. Conclusion
 
-CORE represents a unique take on the Tower Defense genre, combining 3D gameplay with minimalist TRON aesthetics. The game focuses on strategic depth through 3D positioning while maintaining visual simplicity and clean design. The current implementation provides a solid foundation for future development and expansion of features.
+CORE represents a unique take on the Tower Defense genre, combining 3D gameplay with minimalist cyberpunk wireframe aesthetics. The game focuses on strategic depth through 3D positioning while maintaining visual simplicity and clean design. The current implementation provides a solid foundation for future development and expansion of features.
 
 The game successfully demonstrates:
 - **Innovative 3D Tower Defense mechanics**
