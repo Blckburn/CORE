@@ -221,6 +221,7 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 - **GitHub Issues**: [Create Issue](https://github.com/Blckburn/CORE/issues)
 - **Discussions**: [Discussions](https://github.com/Blckburn/CORE/discussions)
+- **Repository**: [CORE on GitHub](https://github.com/Blckburn/CORE)
 
 ---
 
