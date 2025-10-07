@@ -14,9 +14,9 @@ WaveManager::WaveManager()
     , wave_delay_timer_(0.0f)
     , spawn_timer_(0.0f)
     , wave_delay_duration_(5.0f)      // 5 секунд между волнами
-    , initial_spawn_interval_(1.0f)   // 1 враг в секунду изначально
-    , spawn_interval_(1.0f)
-    , base_enemies_per_wave_(5)       // 5 врагов в первой волне
+    , initial_spawn_interval_(0.5f)   // 2 врага в секунду изначально
+    , spawn_interval_(0.5f)
+    , base_enemies_per_wave_(10)      // 10 врагов в первой волне
     , difficulty_multiplier_(1.0f)
     , total_score_(0)
     , core_health_(100) {
@@ -60,19 +60,14 @@ void WaveManager::StartNextWave() {
 }
 
 void WaveManager::CalculateWaveParameters() {
-    // Увеличение количества врагов: 5, 8, 12, 17, 23, 30...
-    enemies_to_spawn_this_wave_ = base_enemies_per_wave_ + (current_wave_ - 1) * 3 + (current_wave_ - 1) * (current_wave_ - 1) / 2;
+    // Увеличение количества врагов: 10, 15, 21, 28, 36, 45...
+    enemies_to_spawn_this_wave_ = base_enemies_per_wave_ + (current_wave_ - 1) * 5 + (current_wave_ - 1) * (current_wave_ - 1) / 2;
     
-    // Уменьшение интервала спавна (но не меньше 0.2 секунды)
-    spawn_interval_ = std::max(0.2f, initial_spawn_interval_ - (current_wave_ - 1) * 0.05f);
+    // Уменьшение интервала спавна (но не меньше 0.15 секунды)
+    spawn_interval_ = std::max(0.15f, initial_spawn_interval_ - (current_wave_ - 1) * 0.03f);
     
     // Увеличение сложности (скорость и здоровье врагов будем использовать позже)
     difficulty_multiplier_ = 1.0f + (current_wave_ - 1) * 0.15f;
-    
-    std::cout << "Wave " << current_wave_ << " parameters:" << std::endl;
-    std::cout << "  - Enemies: " << enemies_to_spawn_this_wave_ << std::endl;
-    std::cout << "  - Spawn interval: " << spawn_interval_ << "s" << std::endl;
-    std::cout << "  - Difficulty multiplier: " << difficulty_multiplier_ << std::endl;
 }
 
 void WaveManager::SpawnEnemy() {
@@ -84,9 +79,6 @@ void WaveManager::SpawnEnemy() {
     
     enemy_spawner_->SpawnEnemy();
     enemies_spawned_this_wave_++;
-    
-    std::cout << "Enemy spawned: " << enemies_spawned_this_wave_ << "/" << enemies_to_spawn_this_wave_ << std::endl;
-    std::cout.flush();
 }
 
 void WaveManager::OnEnemyDestroyed() {
@@ -141,15 +133,6 @@ void WaveManager::Update(float delta_time) {
     if (!wave_active_) {
         if (wave_delay_timer_ > 0.0f) {
             wave_delay_timer_ -= delta_time;
-            
-            // Вывод каждую секунду для отладки
-            static float debug_timer = 0.0f;
-            debug_timer += delta_time;
-            if (debug_timer >= 1.0f) {
-                std::cout << "Time until next wave: " << wave_delay_timer_ << "s" << std::endl;
-                std::cout.flush();
-                debug_timer = 0.0f;
-            }
             
             if (wave_delay_timer_ <= 0.0f) {
                 StartNextWave();

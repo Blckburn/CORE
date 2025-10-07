@@ -157,7 +157,6 @@ void Game::Update() {
         glm::vec2 mouse_delta = input_->GetMouseDelta();
         if (mouse_delta.x != 0.0f || mouse_delta.y != 0.0f) {
             camera_->Rotate(mouse_delta.x, mouse_delta.y);
-            std::cout << "Camera rotation (RMB): " << mouse_delta.x << ", " << mouse_delta.y << std::endl;
         }
     }
     
@@ -166,36 +165,29 @@ void Game::Update() {
     if (scroll_delta != 0.0f) {
         float new_zoom = camera_->GetZoom() - scroll_delta * 3.0f;
         camera_->SetZoom(new_zoom);
-        std::cout << "Zoom: " << camera_->GetZoom() << " (scroll: " << scroll_delta << ")" << std::endl;
         input_->ConsumeScrollDelta(); // Consume the scroll delta
     }
     
     // Handle keyboard for testing - use continuous input for smooth movement
     if (input_->IsKeyPressed(65)) { // GLFW_KEY_A
         camera_->Rotate(-10.0f, 0.0f);
-        std::cout << "Rotate left" << std::endl;
     }
     if (input_->IsKeyPressed(68)) { // GLFW_KEY_D
         camera_->Rotate(10.0f, 0.0f);
-        std::cout << "Rotate right" << std::endl;
     }
     if (input_->IsKeyPressed(87)) { // GLFW_KEY_W
         camera_->Rotate(0.0f, 5.0f);
-        std::cout << "Rotate up" << std::endl;
     }
     if (input_->IsKeyPressed(83)) { // GLFW_KEY_S
         camera_->Rotate(0.0f, -5.0f);
-        std::cout << "Rotate down" << std::endl;
     }
     
     // Zoom with keyboard - use continuous input
     if (input_->IsKeyPressed(81)) { // GLFW_KEY_Q
         camera_->SetZoom(camera_->GetZoom() + 2.0f);
-        std::cout << "Zoom in: " << camera_->GetZoom() << std::endl;
     }
     if (input_->IsKeyPressed(69)) { // GLFW_KEY_E
         camera_->SetZoom(camera_->GetZoom() - 2.0f);
-        std::cout << "Zoom out: " << camera_->GetZoom() << std::endl;
     }
     
     // Update camera
@@ -216,55 +208,16 @@ void Game::Update() {
     static bool left_button_was_pressed = false;
     bool left_button_is_pressed = input_->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT);
     
-    // Debug: Show all key presses
-    static int key_debug_counter = 0;
-    key_debug_counter++;
-    if (key_debug_counter % 60 == 0) { // Every second at 60 FPS
-        // Check if T key is being held (not just pressed)
-        if (input_->IsKeyPressed(84)) {
-            std::cout << "T key is being HELD (key code 84)" << std::endl;
-        }
-        if (input_->IsKeyJustPressed(84)) {
-            std::cout << "T key was JUST PRESSED (key code 84)" << std::endl;
-        }
-    }
-    
-    // Toggle placement mode with T key only
+    // Toggle placement mode with T key
     if (input_->IsKeyJustPressed(84)) { // GLFW_KEY_T
-        std::cout << "T key detected! Toggling placement mode..." << std::endl;
         turret_placement_mode_ = !turret_placement_mode_;
         if (turret_placement_mode_) {
             turret_preview_->Show();
-            std::cout << "Turret placement mode ON (T key pressed)" << std::endl;
+            std::cout << "Turret placement mode ON" << std::endl;
         } else {
             turret_preview_->Hide();
-            std::cout << "Turret placement mode OFF (T key pressed)" << std::endl;
+            std::cout << "Turret placement mode OFF" << std::endl;
         }
-    }
-    
-    // Alternative: Also try with regular key press detection
-    static bool t_key_was_pressed = false;
-    bool t_key_is_pressed = input_->IsKeyPressed(84);
-    if (t_key_is_pressed && !t_key_was_pressed) {
-        std::cout << "T key alternative detection! Toggling placement mode..." << std::endl;
-        turret_placement_mode_ = !turret_placement_mode_;
-        if (turret_placement_mode_) {
-            turret_preview_->Show();
-            std::cout << "Turret placement mode ON (T key alternative)" << std::endl;
-        } else {
-            turret_preview_->Hide();
-            std::cout << "Turret placement mode OFF (T key alternative)" << std::endl;
-        }
-    }
-    t_key_was_pressed = t_key_is_pressed;
-    
-    // Debug: Show current mode periodically
-    static int debug_counter = 0;
-    debug_counter++;
-    if (debug_counter % 300 == 0) { // Every 5 seconds at 60 FPS
-        std::cout << "Debug: Placement mode = " << turret_placement_mode_ 
-                  << ", Left button pressed = " << left_button_is_pressed 
-                  << ", Was pressed = " << left_button_was_pressed << std::endl;
     }
     
     // Update preview position when in placement mode
