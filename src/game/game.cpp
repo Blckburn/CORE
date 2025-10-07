@@ -417,6 +417,10 @@ void Game::Update() {
     bool p_key_is_pressed = input_->IsKeyPressed(80); // GLFW_KEY_P
     if (state_ == GameState::Playing && p_key_is_pressed && !p_key_was_pressed) {
         paused_ = !paused_;
+        if (!paused_) {
+            // Reset all turret fire timers when resuming from pause
+            turret_manager_->ResetAllFireTimers();
+        }
         std::cout << (paused_ ? "Game paused" : "Game resumed") << std::endl;
     }
     p_key_was_pressed = p_key_is_pressed;
@@ -698,8 +702,10 @@ void Game::Update() {
                 selected_turret_ = hovered_turret_;
                 turret_menu_open_ = true;
                 turret_menu_position_ = hovered_turret_->GetPosition();
+                // Auto-pause when opening turret menu
+                paused_ = true;
                 std::cout << "Turret selected at: " << hovered_turret_->GetPosition().x << ", " 
-                          << hovered_turret_->GetPosition().y << ", " << hovered_turret_->GetPosition().z << std::endl;
+                          << hovered_turret_->GetPosition().y << ", " << hovered_turret_->GetPosition().z << " (game paused)" << std::endl;
             } else {
                 // Clicked empty space - close menu
                 selected_turret_ = nullptr;
@@ -713,19 +719,13 @@ void Game::Update() {
     }
     right_button_was_pressed = right_button_is_pressed;
     
-    // Update wave manager (контролирует спавн врагов) - pause when turret menu is open
-    bool game_paused = paused_ || turret_menu_open_ || inventory_open_;
-    if (state_ == GameState::Playing) {
-        if (!game_paused) {
-            wave_manager_->Update(Time::GetDeltaTime());
-        } else {
-            // Still update economy even when paused (for credits)
-            wave_manager_->UpdateEconomy();
-        }
+    // Update wave manager (контролирует спавн врагов)
+    if (state_ == GameState::Playing && !paused_) {
+        wave_manager_->Update(Time::GetDeltaTime());
     }
     
-    // Update game systems (pause when turret menu or inventory is open)
-    if (state_ == GameState::Playing && !game_paused) {
+    // Update game systems
+    if (state_ == GameState::Playing && !paused_) {
         enemy_spawner_->Update(Time::GetDeltaTime());
         turret_manager_->Update(Time::GetDeltaTime(), enemy_spawner_->GetEnemies());
         projectile_manager_->Update(Time::GetDeltaTime(), enemy_spawner_->GetEnemies());
@@ -916,7 +916,11 @@ void Game::Render() {
                 turret_menu_open_ = false;
                 selected_turret_ = nullptr;
                 selected_inventory_index_ = -1;
-                std::cout << "Turret menu closed" << std::endl;
+                // Resume game when closing turret menu
+                paused_ = false;
+                // Reset all turret fire timers to prevent mass firing
+                turret_manager_->ResetAllFireTimers();
+                std::cout << "Turret menu closed (game resumed)" << std::endl;
             }
             
             // Handle equipping items: first select item, then click slot
@@ -958,6 +962,10 @@ void Game::Render() {
                     selected_turret_ = nullptr;
                     turret_menu_open_ = false;
                     selected_inventory_index_ = -1;
+                    // Resume game after selling turret
+                    paused_ = false;
+                    // Reset all turret fire timers to prevent mass firing
+                    turret_manager_->ResetAllFireTimers();
                 }
             }
         }

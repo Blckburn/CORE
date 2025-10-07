@@ -133,6 +133,10 @@ void Turret::UpdateFireTimer(float delta_time) {
     last_fire_time_ += delta_time;
 }
 
+void Turret::ResetFireTimer() {
+    last_fire_time_ = 0.0f;
+}
+
 void Turret::UpdateRotation(float delta_time) {
     if (!current_target_) {
         // No target - rotate to default position (0 degrees)

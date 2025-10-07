@@ -56,6 +56,7 @@ public:
     void Fire(ProjectileManager* projectile_manager);
     bool CanFire() const;
     void UpdateFireTimer(float delta_time);
+    void ResetFireTimer(); // Reset fire timer (for pause/unpause)
 
     // Visual
     void UpdateRotation(float delta_time);

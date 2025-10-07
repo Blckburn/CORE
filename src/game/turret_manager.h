@@ -25,6 +25,7 @@ public:
     bool PlaceTurret(const glm::vec3& position);
     void RemoveTurret(int index);
     void ClearAllTurrets();
+    void ResetAllFireTimers(); // Reset fire timers for all turrets
     void Reset() { ClearAllTurrets(); }
 
     // Getters

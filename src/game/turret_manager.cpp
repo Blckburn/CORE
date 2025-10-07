@@ -107,6 +107,14 @@ void TurretManager::ClearAllTurrets() {
     turrets_.clear();
 }
 
+void TurretManager::ResetAllFireTimers() {
+    for (auto& turret : turrets_) {
+        if (turret) {
+            turret->ResetFireTimer();
+        }
+    }
+}
+
 int TurretManager::GetActiveTurretCount() const {
     int count = 0;
     for (const auto& turret : turrets_) {
