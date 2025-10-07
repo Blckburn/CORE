@@ -19,6 +19,7 @@ public:
     bool IsWaveActive() const { return wave_active_; }
     bool IsGameOver() const { return game_over_; }
     int GetTotalScore() const { return total_score_; }
+    int GetCoreHealth() const { return core_health_; }
     
     // Управление игрой
     void StartGame();

@@ -21,6 +21,7 @@ private:
     
     // Простой текстовый рендеринг через OpenGL примитивы
     void RenderText(const std::string& text, float x, float y, float scale, const glm::vec3& color);
+    void RenderSimpleText(const std::string& text, float x, float y, float scale, const glm::vec3& color);
     void RenderDigit(int digit, float x, float y, float scale, const glm::vec3& color);
     void RenderNumber(int number, float x, float y, float scale, const glm::vec3& color);
     void RenderBar(float x, float y, float width, float height, float fill_percent, const glm::vec3& color);

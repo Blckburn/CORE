@@ -216,17 +216,20 @@ void Game::Update() {
     static bool left_button_was_pressed = false;
     bool left_button_is_pressed = input_->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT);
     
-    // Toggle placement mode with T key
-    if (input_->IsKeyJustPressed(84)) { // GLFW_KEY_T
+    // Toggle placement mode with T key (alternative method)
+    static bool t_key_was_pressed = false;
+    bool t_key_is_pressed = input_->IsKeyPressed(84); // GLFW_KEY_T
+    if (t_key_is_pressed && !t_key_was_pressed) {
         turret_placement_mode_ = !turret_placement_mode_;
         if (turret_placement_mode_) {
             turret_preview_->Show();
-            std::cout << "Turret placement mode ON" << std::endl;
+            std::cout << "Turret placement mode ON (T key)" << std::endl;
         } else {
             turret_preview_->Hide();
-            std::cout << "Turret placement mode OFF" << std::endl;
+            std::cout << "Turret placement mode OFF (T key)" << std::endl;
         }
     }
+    t_key_was_pressed = t_key_is_pressed;
     
     // Update preview position when in placement mode
     if (turret_placement_mode_) {

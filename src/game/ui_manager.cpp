@@ -56,32 +56,45 @@ void UIManager::Render(WaveManager* wave_manager, int window_width, int window_h
     
     // Рисуем UI элементы
     float ui_y = 20.0f;
-    float ui_spacing = 50.0f;
+    float ui_spacing = 60.0f;
     glm::vec3 cyan_color(0.0f, 1.0f, 1.0f);
     glm::vec3 green_color(0.0f, 1.0f, 0.0f);
     glm::vec3 red_color(1.0f, 0.0f, 0.0f);
     glm::vec3 yellow_color(1.0f, 1.0f, 0.0f);
+    glm::vec3 white_color(1.0f, 1.0f, 1.0f);
     
-    // Wave number
-    RenderNumber(current_wave, 20.0f, ui_y, 2.0f, cyan_color);
+    // Wave number with label
+    RenderSimpleText("WAVE", 20.0f, ui_y, 1.5f, cyan_color);
+    RenderNumber(current_wave, 20.0f, ui_y + 25.0f, 2.0f, cyan_color);
     ui_y += ui_spacing;
     
-    // Score
-    RenderNumber(score, 20.0f, ui_y, 2.0f, green_color);
+    // Score with label
+    RenderSimpleText("SCORE", 20.0f, ui_y, 1.5f, green_color);
+    RenderNumber(score, 20.0f, ui_y + 25.0f, 2.0f, green_color);
     ui_y += ui_spacing;
     
-    // Time or enemies remaining
+    // Time or enemies remaining with label
     if (!is_wave_active && time_till_wave > 0.0f) {
+        RenderSimpleText("NEXT", 20.0f, ui_y, 1.5f, yellow_color);
         int seconds = static_cast<int>(time_till_wave);
-        RenderNumber(seconds, 20.0f, ui_y, 2.0f, yellow_color);
+        RenderNumber(seconds, 20.0f, ui_y + 25.0f, 2.0f, yellow_color);
     } else {
+        RenderSimpleText("ENEMIES", 20.0f, ui_y, 1.5f, red_color);
         int enemies = wave_manager->GetEnemiesRemaining();
-        RenderNumber(enemies, 20.0f, ui_y, 2.0f, red_color);
+        RenderNumber(enemies, 20.0f, ui_y + 25.0f, 2.0f, red_color);
     }
     
-    // Health bar (простой прогресс бар)
-    float health_percent = 1.0f; // Пока 100%, позже добавим реальное здоровье
-    RenderBar(window_width - 220.0f, 20.0f, 200.0f, 20.0f, health_percent, cyan_color);
+    // Health bar with label
+    float health_percent = wave_manager->GetCoreHealth() / 100.0f; // Получаем реальное здоровье
+    RenderSimpleText("CORE", window_width - 220.0f, 20.0f, 1.5f, cyan_color);
+    RenderBar(window_width - 220.0f, 45.0f, 200.0f, 20.0f, health_percent, cyan_color);
+    
+    // Game status
+    if (wave_manager->IsGameOver()) {
+        RenderSimpleText("GAME OVER", window_width/2 - 60.0f, window_height/2 - 20.0f, 3.0f, red_color);
+    } else if (!is_wave_active && time_till_wave > 0.0f) {
+        RenderSimpleText("PREPARING...", window_width/2 - 80.0f, window_height/2 - 20.0f, 2.0f, yellow_color);
+    }
     
     // Восстанавливаем состояние
     if (depth_test_enabled) {
@@ -249,9 +262,55 @@ void UIManager::RenderDigit(int digit, float x, float y, float scale, const glm:
     glLineWidth(1.0f);
 }
 
+void UIManager::RenderSimpleText(const std::string& text, float x, float y, float scale, const glm::vec3& color) {
+    glm::mat4 model = glm::mat4(1.0f);
+    shader_->SetUniform("model", model);
+    shader_->SetUniform("color", color);
+    
+    glLineWidth(2.0f * scale);
+    
+    // Простой рендеринг текста через прямоугольники (для заголовков)
+    float char_width = 8.0f * scale;
+    float char_height = 12.0f * scale;
+    
+    for (size_t i = 0; i < text.length(); ++i) {
+        float char_x = x + i * char_width;
+        float char_y = y;
+        
+        // Рисуем простой прямоугольник для каждой буквы
+        std::vector<float> vertices = {
+            char_x, char_y,
+            char_x + char_width, char_y,
+            char_x + char_width, char_y + char_height,
+            char_x, char_y,
+            char_x + char_width, char_y + char_height,
+            char_x, char_y + char_height
+        };
+        
+        unsigned int VAO, VBO;
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+        
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        
+        glDrawArrays(GL_LINES, 0, vertices.size() / 2);
+        
+        glBindVertexArray(0);
+        glDeleteBuffers(1, &VBO);
+        glDeleteVertexArrays(1, &VAO);
+    }
+    
+    glLineWidth(1.0f);
+}
+
 void UIManager::RenderText(const std::string& text, float x, float y, float scale, const glm::vec3& color) {
-    // Заглушка для будущей реализации текста
-    // Пока используем только цифры
+    // Используем простой рендеринг
+    RenderSimpleText(text, x, y, scale, color);
 }
 
 void UIManager::Shutdown() {
