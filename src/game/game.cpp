@@ -198,6 +198,12 @@ void Game::Update() {
     }
     
     // Handle keyboard for testing - use continuous input for smooth movement
+    // Check for game over
+    if (state_ == GameState::Playing && wave_manager_ && wave_manager_->IsGameOver()) {
+        state_ = GameState::GameOver;
+        std::cout << "=== GAME OVER ===" << std::endl;
+    }
+    
     // Menu navigation
     if (state_ == GameState::MainMenu) {
         int &menu_index = main_menu_index_;
@@ -210,14 +216,6 @@ void Game::Update() {
         float cx = w / 2.0f - 100.0f;
         float cy = h / 2.0f - 60.0f;
         
-        // DEBUG: Print menu coords every 60 frames
-        static int menu_debug_counter = 0;
-        if (++menu_debug_counter % 60 == 0) {
-            std::cout << "DEBUG MENU: viewport=" << w << "x" << h 
-                      << ", mouse=" << mouse.x << "," << mouse.y 
-                      << ", menu_center=" << cx << "," << cy << std::endl;
-        }
-        
         for (int i = 0; i < 3; ++i) {
             float rx = cx - 12.0f;
             float ry = cy + i * 30.0f - 6.0f;
@@ -226,14 +224,11 @@ void Game::Update() {
             if (mouse.x >= rx && mouse.x <= rx + rw && mouse.y >= ry && mouse.y <= ry + rh) {
                 menu_index = i;
                 if (input_->IsMouseButtonJustPressed(0)) { // LMB click
-                    std::cout << "DEBUG: Menu item " << menu_index << " clicked!" << std::endl;
                     if (menu_index == 0) {
-                        std::cout << "Starting game..." << std::endl;
                         wave_manager_->StartGame();
                         state_ = GameState::Playing;
                         paused_ = false;
                     } else if (menu_index == 1) {
-                        std::cout << "Opening options..." << std::endl;
                         state_ = GameState::Options;
                     } else if (menu_index == 2) {
                         std::cout << "Exit requested from main menu" << std::endl;
@@ -293,6 +288,68 @@ void Game::Update() {
         }
         if (input_->IsKeyJustPressed(256)) { // Esc
             state_ = GameState::MainMenu;
+        }
+        return;
+    }
+    
+    // Game Over menu
+    if (state_ == GameState::GameOver) {
+        int &menu_index = game_over_menu_index_;
+        if (input_->IsKeyJustPressed(265)) { menu_index = (menu_index + 1) % 2; } // Up
+        if (input_->IsKeyJustPressed(264)) { menu_index = (menu_index + 1) % 2; } // Down
+        int w = renderer_ ? renderer_->GetViewportWidth() : 1280;
+        int h = renderer_ ? renderer_->GetViewportHeight() : 720;
+        // Mouse hover detection
+        glm::vec2 mouse = input_->GetMousePosition();
+        float cx = w / 2.0f - 100.0f;
+        float cy = h / 2.0f + 40.0f; // Below game over text
+        for (int i = 0; i < 2; ++i) {
+            float rx = cx - 12.0f;
+            float ry = cy + i * 30.0f - 6.0f;
+            float rw = 240.0f;
+            float rh = 26.0f;
+            if (mouse.x >= rx && mouse.x <= rx + rw && mouse.y >= ry && mouse.y <= ry + rh) {
+                menu_index = i;
+                if (input_->IsMouseButtonJustPressed(0)) {
+                    if (menu_index == 0) { // Restart
+                        std::cout << "Restarting game..." << std::endl;
+                        // Reset game state
+                        if (enemy_spawner_) enemy_spawner_->ClearAllEnemies();
+                        if (turret_manager_) turret_manager_->ClearAllTurrets();
+                        if (projectile_manager_) {
+                            // Projectiles will be cleared automatically
+                        }
+                        turret_cost_ = 2; // Reset turret cost
+                        wave_manager_->StartGame();
+                        state_ = GameState::Playing;
+                        paused_ = false;
+                    } else if (menu_index == 1) { // Main Menu
+                        std::cout << "Returning to main menu..." << std::endl;
+                        state_ = GameState::MainMenu;
+                        // Reset game
+                        if (enemy_spawner_) enemy_spawner_->ClearAllEnemies();
+                        if (turret_manager_) turret_manager_->ClearAllTurrets();
+                        turret_cost_ = 2;
+                    }
+                }
+            }
+        }
+        if (input_->IsKeyJustPressed(257) || input_->IsKeyJustPressed(335)) { // Enter
+            if (menu_index == 0) { // Restart
+                std::cout << "Restarting game..." << std::endl;
+                if (enemy_spawner_) enemy_spawner_->ClearAllEnemies();
+                if (turret_manager_) turret_manager_->ClearAllTurrets();
+                turret_cost_ = 2;
+                wave_manager_->StartGame();
+                state_ = GameState::Playing;
+                paused_ = false;
+            } else if (menu_index == 1) { // Main Menu
+                std::cout << "Returning to main menu..." << std::endl;
+                state_ = GameState::MainMenu;
+                if (enemy_spawner_) enemy_spawner_->ClearAllEnemies();
+                if (turret_manager_) turret_manager_->ClearAllTurrets();
+                turret_cost_ = 2;
+            }
         }
         return;
     }
@@ -464,6 +521,9 @@ void Game::Update() {
                               << preview_position_.x << ", " 
                               << preview_position_.y << ", " 
                               << preview_position_.z << std::endl;
+                    // Increase turret cost for next turret (progressive pricing)
+                    turret_cost_ += 1; // Each turret costs 1 more than the previous
+                    std::cout << "Next turret will cost: " << turret_cost_ << std::endl;
                     // Optionally exit placement mode after placing
                     // turret_placement_mode_ = false;
                     // turret_preview_->Hide();
@@ -578,15 +638,6 @@ void Game::Render() {
     
     // Render turret preview
     if (turret_preview_ && turret_preview_->IsVisible()) {
-        // DEBUG: Print preview info occasionally
-        static int preview_render_counter = 0;
-        if (++preview_render_counter % 60 == 0) {
-            std::cout << "DEBUG PREVIEW RENDER: pos=(" << preview_position_.x << "," 
-                      << preview_position_.y << "," << preview_position_.z << "), valid=" 
-                      << preview_valid_ << ", cam_pos=(" << camera_->GetPosition().x << "," 
-                      << camera_->GetPosition().y << "," << camera_->GetPosition().z << ")" << std::endl;
-        }
-        
         // Set up model matrix for preview position
         glm::mat4 preview_model = glm::translate(glm::mat4(1.0f), preview_position_);
         shader_->SetUniform("model", preview_model);
@@ -610,6 +661,8 @@ void Game::Render() {
             ui_manager_->RenderMainMenu(w, h, main_menu_index_);
         } else if (state_ == GameState::Options) {
             ui_manager_->RenderOptionsMenu(w, h, options_selected_index_);
+        } else if (state_ == GameState::GameOver) {
+            ui_manager_->RenderGameOverMenu(w, h, game_over_menu_index_, wave_manager_.get());
         } else {
             ui_manager_->Render(wave_manager_.get(), w, h);
         }

@@ -21,6 +21,7 @@ public:
     int GetTotalScore() const { return total_score_; }
     int GetCoreHealth() const { return core_health_; }
     int GetCurrency() const { return currency_; }
+    float GetDifficultyMultiplier() const { return difficulty_multiplier_; }
     
     // Управление игрой
     void StartGame();

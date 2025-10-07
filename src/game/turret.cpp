@@ -9,7 +9,7 @@
 Turret::Turret() :
     position_(0.0f),
     range_(15.0f),              // 15 unit range
-    damage_(25.0f),             // 25 damage per shot
+    damage_(3.0f),              // 3 damage per shot (снижено примерно в 10 раз)
     fire_rate_(2.0f),           // 2 shots per second
     color_(0.0f, 1.0f, 0.0f),   // Green color for turrets
     active_(true),

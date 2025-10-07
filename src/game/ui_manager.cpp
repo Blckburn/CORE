@@ -198,13 +198,6 @@ void UIManager::RenderPausedOverlay(int window_width, int window_height) {
 void UIManager::RenderTooltip(const std::string& text, float x, float y, float scale, const glm::vec3& color) {
     if (!font_ || !text_shader_) return;
     
-    // DEBUG: Print tooltip coords occasionally
-    static int tooltip_debug_counter = 0;
-    if (++tooltip_debug_counter % 60 == 0) {
-        std::cout << "DEBUG TOOLTIP: viewport=" << viewport_width_ << "x" << viewport_height_ 
-                  << ", pos=" << x << "," << y << ", text=\"" << text << "\"" << std::endl;
-    }
-    
     GLboolean depth_enabled = glIsEnabled(GL_DEPTH_TEST);
     glDisable(GL_DEPTH_TEST);
     text_shader_->Use();
@@ -261,6 +254,45 @@ void UIManager::RenderOptionsMenu(int window_width, int window_height, int selec
     }
     text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 0.0f));
     font_->RenderText("ENTER: APPLY, ESC: BACK", cx, cy + 4 * 30.0f + 20.0f, 0.8f, glm::vec3(1.0f,1.0f,0.0f));
+    if (depth_enabled) glEnable(GL_DEPTH_TEST);
+}
+
+void UIManager::RenderGameOverMenu(int window_width, int window_height, int selected_index, WaveManager* wave_manager) {
+    if (!font_ || !text_shader_) return;
+    viewport_width_ = window_width;
+    viewport_height_ = window_height;
+    GLboolean depth_enabled = glIsEnabled(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
+    // Dim background
+    RenderDimBackground(window_width, window_height, 0.6f);
+    text_shader_->Use();
+    glm::mat4 projection = glm::ortho(0.0f, (float)viewport_width_, (float)viewport_height_, 0.0f);
+    text_shader_->SetUniform("projection", projection);
+    text_shader_->SetUniform("text", 0);
+    
+    // Game Over title
+    text_shader_->SetUniform("text_color", glm::vec3(1.0f, 0.0f, 0.0f));
+    font_->RenderText("GAME OVER", window_width / 2.0f - 120.0f, window_height / 2.0f - 100.0f, 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    
+    // Stats
+    if (wave_manager) {
+        int wave = wave_manager->GetCurrentWave();
+        int score = wave_manager->GetTotalScore();
+        text_shader_->SetUniform("text_color", glm::vec3(0.0f, 1.0f, 1.0f));
+        font_->RenderText("WAVE: " + std::to_string(wave), window_width / 2.0f - 80.0f, window_height / 2.0f - 40.0f, 1.2f, glm::vec3(0.0f, 1.0f, 1.0f));
+        font_->RenderText("SCORE: " + std::to_string(score), window_width / 2.0f - 80.0f, window_height / 2.0f - 10.0f, 1.2f, glm::vec3(0.0f, 1.0f, 1.0f));
+    }
+    
+    // Menu options
+    float cx = window_width / 2.0f - 100.0f;
+    float cy = window_height / 2.0f + 40.0f;
+    const char* items[2] = {"RESTART", "MAIN MENU"};
+    for (int i = 0; i < 2; ++i) {
+        glm::vec3 c = (i == selected_index) ? glm::vec3(1.0f, 1.0f, 0.0f) : glm::vec3(1.0f);
+        text_shader_->SetUniform("text_color", c);
+        font_->RenderText(items[i], cx, cy + i * 30.0f, 1.0f, c);
+    }
+    
     if (depth_enabled) glEnable(GL_DEPTH_TEST);
 }
 

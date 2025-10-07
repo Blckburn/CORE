@@ -75,13 +75,20 @@ void EnemySpawner::SpawnEnemy() {
     // Create new enemy
     auto enemy = std::make_unique<Enemy>();
     if (enemy->Initialize(spawn_pos)) {
+        // Get difficulty multiplier from wave manager
+        float difficulty_mult = wave_manager_ ? wave_manager_->GetDifficultyMultiplier() : 1.0f;
+        
         // 30% chance to be a fast enemy variant
         static std::uniform_real_distribution<float> chance_dist(0.0f, 1.0f);
         float roll = chance_dist(gen_);
         if (roll < 0.3f) {
             enemy->SetSpeed(6.0f);      // faster
-            enemy->SetHealth(60.0f);    // less HP
+            enemy->SetHealth(6.0f * difficulty_mult);    // less HP (снижено в 10 раз), but scaled by difficulty
             enemy->SetColor(glm::vec3(1.0f, 1.0f, 0.0f)); // yellow tint
+        } else {
+            // Apply difficulty multiplier to normal enemies too
+            float base_health = enemy->GetHealth(); // Get initial health from Enemy::Initialize
+            enemy->SetHealth(base_health * difficulty_mult);
         }
         enemies_.push_back(std::move(enemy));
         std::cout << "Spawned enemy #" << enemies_.size() << " at distance " 

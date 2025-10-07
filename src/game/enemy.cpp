@@ -7,8 +7,8 @@ Enemy::Enemy() :
     position_(0.0f),
     target_position_(0.0f),
     speed_(4.5f), // -10% speed
-    health_(100.0f),
-    max_health_(100.0f),
+    health_(10.0f),      // Снижено в 10 раз
+    max_health_(10.0f),  // Снижено в 10 раз
     color_(1.0f, 0.0f, 0.0f), // Red color for enemies
     alive_(false),
     initialized_(false),

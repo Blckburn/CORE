@@ -8,7 +8,7 @@
 ProjectileManager::ProjectileManager()
     : wave_manager_(nullptr)
     , default_speed_(30.0f)
-    , default_damage_(25)
+    , default_damage_(3)  // Снижено примерно в 10 раз (25 -> 3)
     , default_color_(0.0f, 1.0f, 1.0f) {
 }
 

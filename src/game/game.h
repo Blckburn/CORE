@@ -55,14 +55,15 @@ private:
     bool preview_valid_;
 
     // Economy
-    int turret_cost_ = 20;
+    int turret_cost_ = 2; // Снижено в 10 раз
 
     // Pause state
     bool paused_ = false;
 
     // Game state / menus
-    enum class GameState { MainMenu, Options, Playing, Paused };
+    enum class GameState { MainMenu, Options, Playing, Paused, GameOver };
     GameState state_ = GameState::MainMenu;
     int main_menu_index_ = 0;
     int options_selected_index_ = 1; // default 1920x1080
+    int game_over_menu_index_ = 0; // 0 = Restart, 1 = Main Menu
 };

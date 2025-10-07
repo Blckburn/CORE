@@ -19,6 +19,7 @@ public:
     // Menus
     void RenderMainMenu(int window_width, int window_height, int selected_index);
     void RenderOptionsMenu(int window_width, int window_height, int selected_index);
+    void RenderGameOverMenu(int window_width, int window_height, int selected_index, WaveManager* wave_manager);
     void RenderDimBackground(int window_width, int window_height, float alpha);
     void Shutdown();
 
