@@ -57,6 +57,7 @@ private:
     
     // Turret management state
     Turret* selected_turret_;
+    Turret* hovered_turret_;
     bool turret_menu_open_;
     glm::vec3 turret_menu_position_;
 

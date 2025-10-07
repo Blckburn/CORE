@@ -166,6 +166,7 @@ bool Game::Initialize(Renderer* renderer, InputManager* input) {
     
     // Initialize turret management state
     selected_turret_ = nullptr;
+    hovered_turret_ = nullptr;
     turret_menu_open_ = false;
     turret_menu_position_ = glm::vec3(0.0f);
     
@@ -567,6 +568,27 @@ void Game::Update() {
     
     left_button_was_pressed = left_button_is_pressed;
     
+    // Update hovered turret (when NOT in placement mode)
+    if (state_ == GameState::Playing && !paused_ && !turret_placement_mode_) {
+        glm::vec2 mouse_pos = input_->GetMousePositionFramebuffer();
+        int viewport_w = renderer_ ? renderer_->GetViewportWidth() : 1280;
+        int viewport_h = renderer_ ? renderer_->GetViewportHeight() : 720;
+        
+        // Cast ray from mouse to 3D world
+        glm::vec3 camera_pos = camera_->GetPosition();
+        glm::vec3 camera_dir = glm::normalize(camera_->GetTarget() - camera_pos);
+        float placement_distance = 15.0f;
+        glm::vec3 plane_center = camera_pos + camera_dir * placement_distance;
+        glm::vec3 plane_normal = camera_dir;
+        glm::vec3 world_pos = ray_caster_->GetPlaneIntersection(
+            mouse_pos, camera_.get(), viewport_w, viewport_h, plane_center, plane_normal);
+        
+        // Update hovered turret
+        hovered_turret_ = turret_manager_->GetTurretAtPosition(world_pos, 4.0f);
+    } else {
+        hovered_turret_ = nullptr;
+    }
+    
     // Handle right mouse button click for turret selection (when NOT in placement mode)
     static bool right_button_was_pressed = false;
     static float right_button_hold_time = 0.0f;
@@ -579,28 +601,13 @@ void Game::Update() {
         
         // On release: if it was a quick click (< 0.15s), select turret
         if (!right_button_is_pressed && right_button_was_pressed && right_button_hold_time < 0.15f) {
-            // Quick right click - try to select turret
-            glm::vec2 mouse_pos = input_->GetMousePositionFramebuffer();
-            int viewport_w = renderer_ ? renderer_->GetViewportWidth() : 1280;
-            int viewport_h = renderer_ ? renderer_->GetViewportHeight() : 720;
-            
-            // Cast ray from mouse to 3D world
-            glm::vec3 camera_pos = camera_->GetPosition();
-            glm::vec3 camera_dir = glm::normalize(camera_->GetTarget() - camera_pos);
-            float placement_distance = 15.0f;
-            glm::vec3 plane_center = camera_pos + camera_dir * placement_distance;
-            glm::vec3 plane_normal = camera_dir;
-            glm::vec3 world_pos = ray_caster_->GetPlaneIntersection(
-                mouse_pos, camera_.get(), viewport_w, viewport_h, plane_center, plane_normal);
-            
-            // Try to find turret at this position (increased radius to 4.0 for easier selection)
-            Turret* turret = turret_manager_->GetTurretAtPosition(world_pos, 4.0f);
-            if (turret) {
-                selected_turret_ = turret;
+            // Quick right click - use already detected hovered turret
+            if (hovered_turret_) {
+                selected_turret_ = hovered_turret_;
                 turret_menu_open_ = true;
-                turret_menu_position_ = turret->GetPosition();
-                std::cout << "Turret selected at: " << turret->GetPosition().x << ", " 
-                          << turret->GetPosition().y << ", " << turret->GetPosition().z << std::endl;
+                turret_menu_position_ = hovered_turret_->GetPosition();
+                std::cout << "Turret selected at: " << hovered_turret_->GetPosition().x << ", " 
+                          << hovered_turret_->GetPosition().y << ", " << hovered_turret_->GetPosition().z << std::endl;
             } else {
                 // Clicked empty space - close menu
                 selected_turret_ = nullptr;
@@ -672,11 +679,18 @@ void Game::Render() {
                 turret_model = glm::rotate(turret_model, glm::radians(turret->GetRotation()), glm::vec3(0.0f, 1.0f, 0.0f));
                 shader_->SetUniform("model", turret_model);
                 
-                // Highlight selected turret
+                // Color priority: selected > hovered > normal
                 bool is_selected = (selected_turret_ == turret.get());
-                glm::vec3 turret_color = is_selected ? 
-                    glm::vec3(1.0f, 1.0f, 0.0f) : // Yellow when selected
-                    turret->GetColor();            // Green normally
+                bool is_hovered = (hovered_turret_ == turret.get());
+                
+                glm::vec3 turret_color;
+                if (is_selected) {
+                    turret_color = glm::vec3(1.0f, 1.0f, 0.0f); // Yellow when selected
+                } else if (is_hovered) {
+                    turret_color = glm::vec3(0.5f, 1.0f, 0.5f); // Light green when hovered
+                } else {
+                    turret_color = turret->GetColor(); // Normal green
+                }
                 
                 shader_->SetUniform("color", turret_color);
                 
