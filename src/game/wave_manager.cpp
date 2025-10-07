@@ -1,10 +1,13 @@
 #include "wave_manager.h"
 #include "enemy_spawner.h"
+#include "item_manager.h"
 #include <iostream>
 #include <algorithm>
+#include <random>
 
 WaveManager::WaveManager()
     : enemy_spawner_(nullptr)
+    , item_manager_(nullptr)
     , current_wave_(0)
     , wave_active_(false)
     , game_over_(false)
@@ -27,6 +30,10 @@ WaveManager::WaveManager()
 
 void WaveManager::SetEnemySpawner(EnemySpawner* spawner) {
     enemy_spawner_ = spawner;
+}
+
+void WaveManager::SetItemManager(ItemManager* item_manager) {
+    item_manager_ = item_manager;
 }
 
 void WaveManager::StartGame() {
@@ -86,7 +93,7 @@ void WaveManager::SpawnEnemy() {
     enemies_spawned_this_wave_++;
 }
 
-void WaveManager::OnEnemyDestroyed() {
+void WaveManager::OnEnemyDestroyed(const glm::vec3& enemy_position) {
     if (enemies_remaining_ > 0) {
         enemies_remaining_--;
         total_score_ += 1; // очки - снижено в 10 раз
@@ -96,6 +103,19 @@ void WaveManager::OnEnemyDestroyed() {
         // (в дальнейшем можно хранить тип врага явно)
         reward = reward_per_enemy_;
         currency_ += reward; // валюта
+        
+        // Drop item chance: 10%
+        if (item_manager_) {
+            static std::random_device rd;
+            static std::mt19937 gen(rd());
+            static std::uniform_real_distribution<float> drop_chance(0.0f, 1.0f);
+            
+            if (drop_chance(gen) < 0.1f) { // 10% chance
+                // Поднять предмет немного вверх чтобы было видно
+                glm::vec3 drop_pos = enemy_position + glm::vec3(0.0f, 2.0f, 0.0f);
+                item_manager_->DropItem(drop_pos);
+            }
+        }
         
         std::cout << "Enemy destroyed! Remaining: " << enemies_remaining_ << " | Score: " << total_score_ << std::endl;
         

@@ -16,6 +16,8 @@ class TurretPreview;
 class ProjectileManager;
 class WaveManager;
 class UIManager;
+class ItemManager;
+class Item;
 
 class Game {
 public:
@@ -47,6 +49,7 @@ private:
     std::unique_ptr<ProjectileManager> projectile_manager_;
     std::unique_ptr<WaveManager> wave_manager_;
     std::unique_ptr<UIManager> ui_manager_;
+    std::unique_ptr<ItemManager> item_manager_;
     
     bool initialized_;
     
@@ -60,6 +63,10 @@ private:
     Turret* hovered_turret_;
     bool turret_menu_open_;
     glm::vec3 turret_menu_position_;
+    
+    // Item management state
+    Item* hovered_item_;
+    int selected_inventory_index_; // -1 = nothing selected
 
     // Economy
     int turret_cost_ = 1; // Начальная стоимость первой башни

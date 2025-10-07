@@ -14,6 +14,8 @@
 #include "wave_manager.h"
 #include "enemy.h"
 #include "ui_manager.h"
+#include "item_manager.h"
+#include "item.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
@@ -140,6 +142,14 @@ bool Game::Initialize(Renderer* renderer, InputManager* input) {
     wave_manager_ = std::make_unique<WaveManager>();
     wave_manager_->SetEnemySpawner(enemy_spawner_.get());
     
+    // Initialize item manager (before connecting to wave manager)
+    item_manager_ = std::make_unique<ItemManager>();
+    if (!item_manager_->Initialize()) {
+        std::cerr << "Failed to initialize item manager!" << std::endl;
+        return false;
+    }
+    wave_manager_->SetItemManager(item_manager_.get());
+    
     // Connect enemy spawner and projectile manager to wave manager
     enemy_spawner_->SetWaveManager(wave_manager_.get());
     projectile_manager_->SetWaveManager(wave_manager_.get());
@@ -169,6 +179,10 @@ bool Game::Initialize(Renderer* renderer, InputManager* input) {
     hovered_turret_ = nullptr;
     turret_menu_open_ = false;
     turret_menu_position_ = glm::vec3(0.0f);
+    
+    // Initialize item management state
+    hovered_item_ = nullptr;
+    selected_inventory_index_ = -1;
     
     initialized_ = true;
     std::cout << "Game initialized successfully!" << std::endl;
@@ -568,6 +582,52 @@ void Game::Update() {
     
     left_button_was_pressed = left_button_is_pressed;
     
+    // Update hovered item (when NOT in placement mode and NOT in turret menu)
+    if (state_ == GameState::Playing && !paused_ && !turret_placement_mode_ && !turret_menu_open_ && item_manager_) {
+        glm::vec2 mouse_pos = input_->GetMousePositionFramebuffer();
+        int viewport_w = renderer_ ? renderer_->GetViewportWidth() : 1280;
+        int viewport_h = renderer_ ? renderer_->GetViewportHeight() : 720;
+        
+        // Check ray-sphere intersection with each dropped item
+        hovered_item_ = nullptr;
+        float closest_distance = 1000000.0f;
+        
+        const auto& items = item_manager_->GetDroppedItems();
+        for (const auto& item : items) {
+            if (!item || !item->IsActive()) continue;
+            
+            // Check intersection with sphere around item (radius 1.5)
+            glm::vec3 intersection = ray_caster_->GetSphereIntersection(
+                mouse_pos, camera_.get(), viewport_w, viewport_h, 
+                item->GetPosition(), 1.5f);
+            
+            // If we hit this item, check if it's closer than previous
+            if (intersection != glm::vec3(0.0f)) {
+                float distance = glm::length(intersection - camera_->GetPosition());
+                if (distance < closest_distance) {
+                    closest_distance = distance;
+                    hovered_item_ = item.get();
+                }
+            }
+        }
+        
+        // Left click to pick up hovered item
+        static bool pickup_button_was_pressed = false;
+        bool pickup_button_is_pressed = input_->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT);
+        if (pickup_button_is_pressed && !pickup_button_was_pressed && hovered_item_) {
+            // Pickup item
+            Item* picked = item_manager_->PickupItemAtPosition(hovered_item_->GetPosition(), 1.5f);
+            if (picked) {
+                std::cout << "Picked up: " << picked->GetName() << std::endl;
+                item_manager_->CleanupPickedItems();
+                hovered_item_ = nullptr;
+            }
+        }
+        pickup_button_was_pressed = pickup_button_is_pressed;
+    } else {
+        hovered_item_ = nullptr;
+    }
+    
     // Update hovered turret (when NOT in placement mode)
     if (state_ == GameState::Playing && !paused_ && !turret_placement_mode_ && turret_manager_) {
         glm::vec2 mouse_pos = input_->GetMousePositionFramebuffer();
@@ -675,6 +735,31 @@ void Game::Render() {
                 
                 // Render enemy cube as wireframe
                 enemy_mesh_->RenderWireframe();
+            }
+        }
+    }
+    
+    // Render dropped items
+    if (item_manager_) {
+        const auto& items = item_manager_->GetDroppedItems();
+        for (const auto& item : items) {
+            if (item && item->IsActive()) {
+                // Small cube for item (0.5 scale)
+                glm::mat4 item_model = glm::mat4(1.0f);
+                item_model = glm::translate(item_model, item->GetPosition());
+                item_model = glm::scale(item_model, glm::vec3(0.5f)); // Smaller cube
+                shader_->SetUniform("model", item_model);
+                
+                // Highlight hovered item
+                bool is_hovered = (hovered_item_ == item.get());
+                glm::vec3 item_color = is_hovered ? 
+                    item->GetColor() * 1.5f : // Brighter when hovered
+                    item->GetColor();
+                
+                shader_->SetUniform("color", item_color);
+                
+                // Render item as wireframe cube
+                cube_mesh_->RenderWireframe();
             }
         }
     }
@@ -787,7 +872,33 @@ void Game::Render() {
         // Turret menu when turret is selected
         if (state_ == GameState::Playing && turret_menu_open_ && selected_turret_) {
             bool sell_clicked = false;
-            ui_manager_->RenderTurretMenu(turret_menu_position_, camera_.get(), input_, w, h, sell_clicked);
+            int slot_clicked = -1;
+            int inventory_clicked = -1;
+            
+            ui_manager_->RenderTurretMenu(selected_turret_, camera_.get(), input_, item_manager_.get(), w, h, sell_clicked, slot_clicked, inventory_clicked);
+            
+            // Handle slot + inventory click (equip item)
+            if (slot_clicked >= 0 && inventory_clicked >= 0) {
+                const auto& inventory = item_manager_->GetInventory();
+                if (inventory_clicked < static_cast<int>(inventory.size())) {
+                    Item* item = inventory[inventory_clicked].get();
+                    selected_turret_->EquipItem(item, slot_clicked);
+                    std::cout << "Equipped item from inventory slot " << inventory_clicked << " to turret slot " << slot_clicked << std::endl;
+                }
+            } else if (selected_inventory_index_ >= 0 && slot_clicked >= 0) {
+                // Previously selected inventory item + new slot click
+                const auto& inventory = item_manager_->GetInventory();
+                if (selected_inventory_index_ < static_cast<int>(inventory.size())) {
+                    Item* item = inventory[selected_inventory_index_].get();
+                    selected_turret_->EquipItem(item, slot_clicked);
+                    std::cout << "Equipped item from inventory slot " << selected_inventory_index_ << " to turret slot " << slot_clicked << std::endl;
+                    selected_inventory_index_ = -1;
+                }
+            } else if (inventory_clicked >= 0) {
+                // Select inventory item for next slot click
+                selected_inventory_index_ = inventory_clicked;
+                std::cout << "Selected inventory item " << inventory_clicked << std::endl;
+            }
             
             // Handle sell click
             if (sell_clicked && selected_turret_) {
@@ -803,6 +914,7 @@ void Game::Render() {
                     std::cout << "Turret sold for " << refund << " credits" << std::endl;
                     selected_turret_ = nullptr;
                     turret_menu_open_ = false;
+                    selected_inventory_index_ = -1;
                 }
             }
         }
@@ -826,6 +938,7 @@ void Game::Shutdown() {
     projectile_manager_.reset();
     wave_manager_.reset();
     ui_manager_.reset();
+    item_manager_.reset();
     
     initialized_ = false;
     renderer_ = nullptr;

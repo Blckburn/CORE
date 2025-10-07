@@ -1,8 +1,10 @@
 #pragma once
 
 #include <vector>
+#include <glm/glm.hpp>
 
 class EnemySpawner;
+class ItemManager;
 
 class WaveManager {
 public:
@@ -11,6 +13,7 @@ public:
 
     void Update(float delta_time);
     void SetEnemySpawner(EnemySpawner* spawner);
+    void SetItemManager(ItemManager* item_manager);
     
     // Геттеры для UI
     int GetCurrentWave() const { return current_wave_; }
@@ -26,7 +29,7 @@ public:
     // Управление игрой
     void StartGame();
     void StartNextWave();
-    void OnEnemyDestroyed();
+    void OnEnemyDestroyed(const glm::vec3& enemy_position);
     void OnEnemyReachedCore();
     void SetPreparationDuration(float seconds) { wave_delay_duration_ = seconds; }
     void SetInitialPreparation(float seconds) { wave_delay_timer_ = seconds; }
@@ -37,6 +40,7 @@ public:
 
 private:
     EnemySpawner* enemy_spawner_;
+    ItemManager* item_manager_;
     
     // Состояние волны
     int current_wave_;

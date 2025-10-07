@@ -1,6 +1,9 @@
 #include "ui_manager.h"
 #include "wave_manager.h"
 #include "turret_manager.h"
+#include "turret.h"
+#include "item_manager.h"
+#include "item.h"
 #include "core/input.h"
 #include "graphics/shader.h"
 #include "graphics/font.h"
@@ -9,6 +12,7 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <algorithm>
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -304,52 +308,121 @@ void UIManager::RenderTooltip(const std::string& text, float x, float y, float s
     if (depth_enabled) glEnable(GL_DEPTH_TEST);
 }
 
-void UIManager::RenderTurretMenu(const glm::vec3& turret_pos, class Camera* camera, class InputManager* input, int window_width, int window_height, bool& sell_clicked) {
-    if (!font_ || !text_shader_ || !camera || !input) return;
+void UIManager::RenderTurretMenu(class Turret* turret, class Camera* camera, class InputManager* input, class ItemManager* item_manager, int window_width, int window_height, bool& sell_clicked, int& slot_clicked, int& inventory_clicked) {
+    if (!font_ || !text_shader_ || !camera || !input || !turret || !item_manager) return;
     
     sell_clicked = false;
-    
-    // Project 3D turret position to 2D screen space
-    glm::mat4 view = camera->GetViewMatrix();
-    glm::mat4 projection = camera->GetProjectionMatrix();
-    glm::vec4 clip_pos = projection * view * glm::vec4(turret_pos, 1.0f);
-    
-    if (clip_pos.w <= 0) return; // Behind camera
-    
-    glm::vec3 ndc = glm::vec3(clip_pos) / clip_pos.w;
-    float screen_x = (ndc.x * 0.5f + 0.5f) * window_width;
-    float screen_y = (1.0f - (ndc.y * 0.5f + 0.5f)) * window_height;
-    
-    // Menu position (above turret)
-    float menu_x = screen_x - 40.0f;
-    float menu_y = screen_y - 60.0f;
-    float button_width = 90.0f;
-    float button_height = 20.0f;
+    slot_clicked = -1;
+    inventory_clicked = -1;
     
     GLboolean depth_enabled = glIsEnabled(GL_DEPTH_TEST);
     glDisable(GL_DEPTH_TEST);
     
-    // Check if mouse is over button
-    glm::vec2 mouse = input->GetMousePosition();
-    bool mouse_over = (mouse.x >= menu_x && mouse.x <= menu_x + button_width &&
-                       mouse.y >= menu_y && mouse.y <= menu_y + button_height);
+    // Menu at bottom center of screen
+    float menu_width = 600.0f;
+    float menu_height = 250.0f;
+    float menu_x = window_width / 2.0f - menu_width / 2.0f;
+    float menu_y = window_height - menu_height - 20.0f;
     
-    // Render "SELL" button
+    // Dim background for menu area
+    RenderDimBackground(window_width, window_height, 0.3f);
+    
     text_shader_->Use();
     glm::mat4 text_projection = glm::ortho(0.0f, (float)viewport_width_, (float)viewport_height_, 0.0f);
     text_shader_->SetUniform("projection", text_projection);
     text_shader_->SetUniform("text", 0);
     
-    glm::vec3 button_color = mouse_over ? glm::vec3(1.0f, 0.5f, 0.0f) : glm::vec3(1.0f, 1.0f, 0.0f);
-    text_shader_->SetUniform("text_color", button_color);
-    font_->RenderText("SELL (50%)", menu_x, menu_y, 0.8f, button_color);
+    glm::vec2 mouse = input->GetMousePosition();
+    float y_offset = menu_y + 10.0f;
     
-    if (depth_enabled) glEnable(GL_DEPTH_TEST);
+    // Title
+    text_shader_->SetUniform("text_color", glm::vec3(0.0f, 1.0f, 1.0f));
+    font_->RenderText("TURRET MANAGEMENT", menu_x + 10.0f, y_offset, 0.9f, glm::vec3(0.0f, 1.0f, 1.0f));
+    y_offset += 30.0f;
     
-    // Check for click on button
-    if (mouse_over && input->IsMouseButtonJustPressed(0)) {
+    // Turret stats
+    text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 1.0f));
+    font_->RenderText("DMG:" + std::to_string(static_cast<int>(turret->GetDamage())), menu_x + 10.0f, y_offset, 0.7f, glm::vec3(1.0f));
+    font_->RenderText("RATE:" + std::to_string(static_cast<int>(turret->GetFireRate())), menu_x + 100.0f, y_offset, 0.7f, glm::vec3(1.0f));
+    font_->RenderText("RNG:" + std::to_string(static_cast<int>(turret->GetRange())), menu_x + 200.0f, y_offset, 0.7f, glm::vec3(1.0f));
+    y_offset += 30.0f;
+    
+    // Item slots (3 slots)
+    text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 0.0f));
+    font_->RenderText("SLOTS:", menu_x + 10.0f, y_offset, 0.8f, glm::vec3(1.0f, 1.0f, 0.0f));
+    y_offset += 25.0f;
+    
+    const auto& slots = turret->GetItemSlots();
+    for (int i = 0; i < 3; ++i) {
+        float slot_x = menu_x + 10.0f + i * 90.0f;
+        float slot_y = y_offset;
+        float slot_w = 80.0f;
+        float slot_h = 20.0f;
+        
+        bool mouse_over_slot = (mouse.x >= slot_x && mouse.x <= slot_x + slot_w &&
+                                mouse.y >= slot_y && mouse.y <= slot_y + slot_h);
+        
+        glm::vec3 slot_color = mouse_over_slot ? glm::vec3(1.0f, 1.0f, 0.0f) : glm::vec3(0.5f, 0.5f, 0.5f);
+        
+        if (slots[i]) {
+            // Show equipped item
+            slot_color = slots[i]->GetColor();
+            font_->RenderText("SLOT" + std::to_string(i+1), slot_x, slot_y, 0.6f, slot_color);
+        } else {
+            // Empty slot
+            font_->RenderText("[EMPTY]", slot_x, slot_y, 0.6f, slot_color);
+        }
+        
+        // Click detection
+        if (mouse_over_slot && input->IsMouseButtonJustPressed(0)) {
+            slot_clicked = i;
+        }
+    }
+    y_offset += 30.0f;
+    
+    // Inventory
+    text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 0.0f));
+    font_->RenderText("INVENTORY:", menu_x + 10.0f, y_offset, 0.8f, glm::vec3(1.0f, 1.0f, 0.0f));
+    y_offset += 25.0f;
+    
+    const auto& inventory = item_manager->GetInventory();
+    int items_shown = std::min(5, static_cast<int>(inventory.size()));
+    for (int i = 0; i < items_shown; ++i) {
+        float inv_x = menu_x + 10.0f + i * 90.0f;
+        float inv_y = y_offset;
+        float inv_w = 80.0f;
+        float inv_h = 20.0f;
+        
+        bool mouse_over_inv = (mouse.x >= inv_x && mouse.x <= inv_x + inv_w &&
+                               mouse.y >= inv_y && mouse.y <= inv_y + inv_h);
+        
+        glm::vec3 inv_color = mouse_over_inv ? inventory[i]->GetColor() * 1.5f : inventory[i]->GetColor();
+        font_->RenderText("ITEM" + std::to_string(i+1), inv_x, inv_y, 0.6f, inv_color);
+        
+        // Click detection
+        if (mouse_over_inv && input->IsMouseButtonJustPressed(0)) {
+            inventory_clicked = i;
+        }
+    }
+    y_offset += 30.0f;
+    
+    // SELL button
+    float sell_x = menu_x + menu_width - 100.0f;
+    float sell_y = menu_y + 10.0f;
+    float sell_w = 90.0f;
+    float sell_h = 20.0f;
+    bool mouse_over_sell = (mouse.x >= sell_x && mouse.x <= sell_x + sell_w &&
+                            mouse.y >= sell_y && mouse.y <= sell_y + sell_h);
+    
+    glm::vec3 sell_color = mouse_over_sell ? glm::vec3(1.0f, 0.5f, 0.0f) : glm::vec3(1.0f, 0.2f, 0.2f);
+    text_shader_->SetUniform("text_color", sell_color);
+    font_->RenderText("SELL (50%)", sell_x, sell_y, 0.8f, sell_color);
+    
+    if (mouse_over_sell && input->IsMouseButtonJustPressed(0)) {
         sell_clicked = true;
     }
+    
+    if (depth_enabled) glEnable(GL_DEPTH_TEST);
 }
 
 void UIManager::RenderMainMenu(int window_width, int window_height, int selected_index) {

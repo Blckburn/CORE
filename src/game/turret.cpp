@@ -1,6 +1,7 @@
 #include "turret.h"
 #include "enemy.h"
 #include "projectile_manager.h"
+#include "item.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/constants.hpp>
 #include <algorithm>
@@ -11,10 +12,14 @@ Turret::Turret() :
     range_(15.0f),              // 15 unit range
     damage_(3.0f),              // 3 damage per shot (снижено примерно в 10 раз)
     fire_rate_(2.0f),           // 2 shots per second
+    base_range_(15.0f),         // Base range
+    base_damage_(3.0f),         // Base damage
+    base_fire_rate_(2.0f),      // Base fire rate
     color_(0.0f, 1.0f, 0.0f),   // Green color for turrets
     active_(true),
     initialized_(false),
     cost_(0),                   // Will be set when placed
+    item_slots_({nullptr, nullptr, nullptr}), // 3 empty slots
     current_target_(nullptr),
     rotation_(0.0f),
     target_rotation_(0.0f),
@@ -184,3 +189,77 @@ glm::vec3 Turret::GetDirectionToTarget() const {
     
     return glm::vec3(0.0f, 0.0f, 1.0f);  // Default forward direction
 }
+
+bool Turret::EquipItem(Item* item, int slot_index) {
+    if (slot_index < 0 || slot_index >= 3) {
+        std::cout << "Invalid slot index: " << slot_index << std::endl;
+        return false;
+    }
+    
+    if (!item) {
+        std::cout << "Cannot equip null item!" << std::endl;
+        return false;
+    }
+    
+    // Replace item in slot (old item is lost)
+    item_slots_[slot_index] = item;
+    
+    std::cout << "Equipped " << item->GetName() << " to slot " << slot_index << std::endl;
+    
+    // Recalculate stats
+    RecalculateStats();
+    
+    return true;
+}
+
+void Turret::RecalculateStats() {
+    // Reset to base stats
+    damage_ = base_damage_;
+    fire_rate_ = base_fire_rate_;
+    range_ = base_range_;
+    
+    // Apply bonuses from equipped items
+    for (const auto& item : item_slots_) {
+        if (!item) continue;
+        
+        // Apply primary bonus
+        float primary_bonus_mult = 1.0f + (item->GetPrimaryBonus() / 100.0f);
+        switch (item->GetPrimaryStat()) {
+            case ItemStat::Damage:
+                damage_ *= primary_bonus_mult;
+                break;
+            case ItemStat::FireRate:
+                fire_rate_ *= primary_bonus_mult;
+                break;
+            case ItemStat::Range:
+                range_ *= primary_bonus_mult;
+                break;
+            default: break;
+        }
+        
+        // Apply secondary bonus (if exists)
+        if (item->GetSecondaryBonus() > 0.0f) {
+            float secondary_bonus_mult = 1.0f + (item->GetSecondaryBonus() / 100.0f);
+            switch (item->GetSecondaryStat()) {
+                case ItemStat::Damage:
+                    damage_ *= secondary_bonus_mult;
+                    break;
+                case ItemStat::FireRate:
+                    fire_rate_ *= secondary_bonus_mult;
+                    break;
+                case ItemStat::Range:
+                    range_ *= secondary_bonus_mult;
+                    break;
+                default: break;
+            }
+        }
+    }
+    
+    // Update reload time based on fire rate
+    reload_time_ = 1.0f / fire_rate_;
+    
+    std::cout << "Turret stats recalculated: Damage=" << damage_ 
+              << ", FireRate=" << fire_rate_ 
+              << ", Range=" << range_ << std::endl;
+}
+

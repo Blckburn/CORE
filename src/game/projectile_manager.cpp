@@ -37,10 +37,11 @@ void ProjectileManager::Update(float delta_time, const std::vector<std::unique_p
                 for (const auto& enemy : enemies) {
                     if (enemy && enemy->IsAlive()) {
                         if (projectile->CheckHit(enemy->GetPosition(), 1.2f)) {
+                            glm::vec3 enemy_pos = enemy->GetPosition(); // Save position before damage
                             enemy->TakeDamage(projectile->GetDamage());
                             std::cout << "Projectile hit enemy for " << projectile->GetDamage() << " damage!" << std::endl;
                             if (!enemy->IsAlive() && wave_manager_) {
-                                wave_manager_->OnEnemyDestroyed();
+                                wave_manager_->OnEnemyDestroyed(enemy_pos); // Pass enemy death position
                             }
                             damaged = true;
                             break;

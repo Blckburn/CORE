@@ -54,6 +54,8 @@ set(SOURCES
     src/game/turret_preview.cpp
     src/game/wave_manager.cpp
     src/game/ui_manager.cpp
+    src/game/item.cpp
+    src/game/item_manager.cpp
     src/utils/math.cpp
     src/utils/debug.cpp
 )

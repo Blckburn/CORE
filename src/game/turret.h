@@ -3,9 +3,11 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <vector>
+#include <array>
 
 class Enemy;
 class ProjectileManager;
+class Item;
 
 class Turret {
 public:
@@ -26,11 +28,15 @@ public:
     float GetRange() const { return range_; }
     float GetDamage() const { return damage_; }
     float GetFireRate() const { return fire_rate_; }
+    float GetBaseDamage() const { return base_damage_; }
+    float GetBaseFireRate() const { return base_fire_rate_; }
+    float GetBaseRange() const { return base_range_; }
     bool IsActive() const { return active_; }
     glm::vec3 GetColor() const { return color_; }
     float GetRotation() const { return rotation_; }
     Enemy* GetCurrentTarget() const { return current_target_; }
     int GetCost() const { return cost_; }
+    const std::array<Item*, 3>& GetItemSlots() const { return item_slots_; }
 
     // Setters
     void SetPosition(const glm::vec3& position) { position_ = position; }
@@ -53,16 +59,24 @@ public:
 
     // Visual
     void UpdateRotation(float delta_time);
+    
+    // Item management
+    bool EquipItem(Item* item, int slot_index); // Equip item to slot (0-2)
+    void RecalculateStats(); // Recalculate stats based on equipped items
 
 private:
     glm::vec3 position_;        // Turret position
-    float range_;               // Attack range
-    float damage_;              // Damage per shot
-    float fire_rate_;           // Shots per second
+    float range_;               // Attack range (modified by items)
+    float damage_;              // Damage per shot (modified by items)
+    float fire_rate_;           // Shots per second (modified by items)
+    float base_range_;          // Base range (without items)
+    float base_damage_;         // Base damage (without items)
+    float base_fire_rate_;      // Base fire rate (without items)
     glm::vec3 color_;           // Turret color (green for turrets)
     bool active_;               // Is turret active
     bool initialized_;          // Is turret initialized
     int cost_;                  // Cost when placed (for sell refund)
+    std::array<Item*, 3> item_slots_; // 3 slots for items
 
     // Targeting
     Enemy* current_target_;     // Current target enemy
