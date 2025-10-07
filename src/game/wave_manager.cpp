@@ -111,7 +111,7 @@ void WaveManager::OnEnemyDestroyed() {
 }
 
 void WaveManager::OnEnemyReachedCore() {
-    core_health_ -= 10;
+    core_health_ -= 1; // Снижено в 10 раз
     
     if (enemies_remaining_ > 0) {
         enemies_remaining_--;

@@ -319,7 +319,7 @@ void Game::Update() {
                         if (projectile_manager_) {
                             // Projectiles will be cleared automatically
                         }
-                        turret_cost_ = 2; // Reset turret cost
+                        turret_cost_ = 1; // Reset turret cost
                         wave_manager_->StartGame();
                         state_ = GameState::Playing;
                         paused_ = false;
@@ -329,7 +329,7 @@ void Game::Update() {
                         // Reset game
                         if (enemy_spawner_) enemy_spawner_->ClearAllEnemies();
                         if (turret_manager_) turret_manager_->ClearAllTurrets();
-                        turret_cost_ = 2;
+                        turret_cost_ = 1;
                     }
                 }
             }
@@ -339,7 +339,7 @@ void Game::Update() {
                 std::cout << "Restarting game..." << std::endl;
                 if (enemy_spawner_) enemy_spawner_->ClearAllEnemies();
                 if (turret_manager_) turret_manager_->ClearAllTurrets();
-                turret_cost_ = 2;
+                turret_cost_ = 1;
                 wave_manager_->StartGame();
                 state_ = GameState::Playing;
                 paused_ = false;
@@ -348,7 +348,7 @@ void Game::Update() {
                 state_ = GameState::MainMenu;
                 if (enemy_spawner_) enemy_spawner_->ClearAllEnemies();
                 if (turret_manager_) turret_manager_->ClearAllTurrets();
-                turret_cost_ = 2;
+                turret_cost_ = 1;
             }
         }
         return;

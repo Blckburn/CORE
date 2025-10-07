@@ -55,7 +55,7 @@ private:
     bool preview_valid_;
 
     // Economy
-    int turret_cost_ = 2; // Снижено в 10 раз
+    int turret_cost_ = 1; // Начальная стоимость первой башни
 
     // Pause state
     bool paused_ = false;

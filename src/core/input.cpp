@@ -77,11 +77,7 @@ bool InputManager::IsMouseButtonPressed(int button) const {
 
 bool InputManager::IsMouseButtonJustPressed(int button) const {
     if (button < 0 || button >= GLFW_MOUSE_BUTTON_LAST) return false;
-    bool result = mouse_buttons_[button] && !mouse_buttons_prev_[button];
-    if (result) {
-        std::cout << "DEBUG: Mouse button " << button << " just pressed! (current=" << mouse_buttons_[button] << ", prev=" << mouse_buttons_prev_[button] << ")" << std::endl;
-    }
-    return result;
+    return mouse_buttons_[button] && !mouse_buttons_prev_[button];
 }
 
 float InputManager::GetScrollDelta() const {
