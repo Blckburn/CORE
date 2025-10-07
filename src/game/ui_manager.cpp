@@ -496,9 +496,9 @@ void UIManager::RenderItemGrid(ItemManager* item_manager, InputManager* input, i
     text_shader_->SetUniform("text", 0);
     
     // Grid settings
-    const float grid_x = window_width - 550.0f; // Right side, more space from edge
+    const float grid_x = window_width - 650.0f; // Right side, more space from edge
     const float grid_y = 100.0f; // Lower from top
-    const float cell_width = 250.0f; // Wider cells
+    const float cell_width = 300.0f; // Even wider cells for full text
     const float cell_height = 35.0f; // Taller cells
     const int columns = 2;
     
@@ -546,14 +546,14 @@ void UIManager::RenderItemGrid(ItemManager* item_manager, InputManager* input, i
         std::string name = item->GetName();
         int stack_count = item->GetStackCount();
         
-        // Shorten name if needed
-        if (name.length() > 15) {
-            name = name.substr(0, 12) + "...";
-        }
-        
         // Add stack count
         if (stack_count > 1) {
             name += " x" + std::to_string(stack_count);
+        }
+        
+        // Shorten name if needed (increased limit)
+        if (name.length() > 28) {
+            name = name.substr(0, 25) + "...";
         }
         
         text_shader_->SetUniform("text_color", color);
