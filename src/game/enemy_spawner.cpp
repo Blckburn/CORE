@@ -82,13 +82,15 @@ void EnemySpawner::SpawnEnemy() {
         static std::uniform_real_distribution<float> chance_dist(0.0f, 1.0f);
         float roll = chance_dist(gen_);
         if (roll < 0.3f) {
-            enemy->SetSpeed(6.0f);      // faster
-            enemy->SetHealth(6.0f * difficulty_mult);    // less HP (снижено в 10 раз), but scaled by difficulty
+            enemy->SetSpeed(6.0f * std::min(1.5f, 1.0f + (difficulty_mult - 1.0f) * 0.5f));  // Speed scales slower than HP
+            enemy->SetHealth(6.0f * difficulty_mult);    // less HP, but scaled by difficulty
             enemy->SetColor(glm::vec3(1.0f, 1.0f, 0.0f)); // yellow tint
         } else {
-            // Apply difficulty multiplier to normal enemies too
+            // Apply difficulty multiplier to normal enemies
             float base_health = enemy->GetHealth(); // Get initial health from Enemy::Initialize
+            float base_speed = enemy->GetSpeed();
             enemy->SetHealth(base_health * difficulty_mult);
+            enemy->SetSpeed(base_speed * std::min(1.5f, 1.0f + (difficulty_mult - 1.0f) * 0.5f));  // Speed scales slower (max 1.5x)
         }
         enemies_.push_back(std::move(enemy));
         std::cout << "Spawned enemy #" << enemies_.size() << " at distance " 

@@ -31,11 +31,17 @@ public:
     const std::vector<std::unique_ptr<Turret>>& GetTurrets() const { return turrets_; }
     int GetTurretCount() const { return static_cast<int>(turrets_.size()); }
     int GetActiveTurretCount() const;
+    int GetMaxTurrets() const { return max_turrets_; }
+    bool CanPlaceMoreTurrets() const { return GetTurretCount() < max_turrets_; }
 
     // Placement validation
     bool IsValidPlacement(const glm::vec3& position) const;
     float GetMinDistanceFromCenter() const { return min_distance_from_center_; }
     float GetMaxDistanceFromCenter() const { return max_distance_from_center_; }
+    
+    // Turret selection and management
+    Turret* GetTurretAtPosition(const glm::vec3& position, float radius = 1.5f);
+    bool RemoveTurretAtPosition(const glm::vec3& position, float radius = 1.5f);
 
     // Configuration
     void SetMinDistanceFromCenter(float distance) { min_distance_from_center_ = distance; }
@@ -49,6 +55,7 @@ private:
     float min_distance_from_center_;     // Minimum distance from center cube
     float max_distance_from_center_;     // Maximum distance from center cube
     float min_distance_between_turrets_; // Minimum distance between turrets
+    int max_turrets_;                    // Maximum number of turrets allowed
     
     class ProjectileManager* projectile_manager_;
     

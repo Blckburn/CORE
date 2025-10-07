@@ -14,6 +14,7 @@ public:
 
     bool Initialize(Shader* shader);
     void Render(WaveManager* wave_manager, int window_width, int window_height);
+    void RenderWithTurrets(WaveManager* wave_manager, class TurretManager* turret_manager, int window_width, int window_height);
     void RenderPausedOverlay(int window_width, int window_height);
     void RenderTooltip(const std::string& text, float x, float y, float scale, const glm::vec3& color);
     // Menus

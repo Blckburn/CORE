@@ -6,6 +6,7 @@ TurretManager::TurretManager() :
     min_distance_from_center_(5.0f),      // At least 5 units from center
     max_distance_from_center_(20.0f),     // At most 20 units from center
     min_distance_between_turrets_(3.0f),  // At least 3 units between turrets
+    max_turrets_(15),                     // Maximum 15 turrets
     projectile_manager_(nullptr) {
 }
 
@@ -67,6 +68,12 @@ void TurretManager::Render() {
 bool TurretManager::PlaceTurret(const glm::vec3& position) {
     std::cout << "Attempting to place turret at: " 
               << position.x << ", " << position.y << ", " << position.z << std::endl;
+    
+    // Check turret limit
+    if (!CanPlaceMoreTurrets()) {
+        std::cout << "Cannot place turret: limit reached (" << max_turrets_ << " max)" << std::endl;
+        return false;
+    }
     
     // Validate placement
     if (!IsValidPlacement(position)) {
@@ -147,4 +154,33 @@ bool TurretManager::IsWithinPlacementBounds(const glm::vec3& position) const {
     
     return distance_from_center >= min_distance_from_center_ && 
            distance_from_center <= max_distance_from_center_;
+}
+
+Turret* TurretManager::GetTurretAtPosition(const glm::vec3& position, float radius) {
+    for (auto& turret : turrets_) {
+        if (!turret || !turret->IsActive()) continue;
+        
+        float distance = glm::length(turret->GetPosition() - position);
+        if (distance <= radius) {
+            return turret.get();
+        }
+    }
+    return nullptr;
+}
+
+bool TurretManager::RemoveTurretAtPosition(const glm::vec3& position, float radius) {
+    for (auto it = turrets_.begin(); it != turrets_.end(); ++it) {
+        if (!(*it) || !(*it)->IsActive()) continue;
+        
+        float distance = glm::length((*it)->GetPosition() - position);
+        if (distance <= radius) {
+            std::cout << "Removing turret at position: " 
+                      << (*it)->GetPosition().x << ", " 
+                      << (*it)->GetPosition().y << ", " 
+                      << (*it)->GetPosition().z << std::endl;
+            turrets_.erase(it);
+            return true;
+        }
+    }
+    return false;
 }

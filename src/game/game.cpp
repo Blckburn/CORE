@@ -513,8 +513,12 @@ void Game::Update() {
             std::cout << "Preview valid: " << preview_valid_ << std::endl;
             
             if (preview_valid_) {
+                // Check turret limit
+                if (!turret_manager_->CanPlaceMoreTurrets()) {
+                    std::cout << "Cannot place turret: limit reached!" << std::endl;
+                } 
                 // Economy: try spend currency
-                if (wave_manager_->SpendCurrency(turret_cost_)) {
+                else if (wave_manager_->SpendCurrency(turret_cost_)) {
                     std::cout << "Attempting to place turret..." << std::endl;
                     if (turret_manager_->PlaceTurret(preview_position_)) {
                     std::cout << "SUCCESS: Turret placed at: " 
@@ -664,7 +668,7 @@ void Game::Render() {
         } else if (state_ == GameState::GameOver) {
             ui_manager_->RenderGameOverMenu(w, h, game_over_menu_index_, wave_manager_.get());
         } else {
-            ui_manager_->Render(wave_manager_.get(), w, h);
+            ui_manager_->RenderWithTurrets(wave_manager_.get(), turret_manager_.get(), w, h);
         }
         if (paused_ && state_ == GameState::Playing) {
             ui_manager_->RenderPausedOverlay(w, h);

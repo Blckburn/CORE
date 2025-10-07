@@ -70,8 +70,9 @@ void WaveManager::CalculateWaveParameters() {
     // Уменьшение интервала спавна (но не меньше 0.15 секунды)
     spawn_interval_ = std::max(0.15f, initial_spawn_interval_ - (current_wave_ - 1) * 0.03f);
     
-    // Увеличение сложности (скорость и здоровье врагов будем использовать позже)
-    difficulty_multiplier_ = 1.0f + (current_wave_ - 1) * 0.15f;
+    // Увеличение сложности (скорость и здоровье врагов)
+    // Wave 1: 1.0x, Wave 2: 1.3x, Wave 5: 2.2x, Wave 10: 3.7x
+    difficulty_multiplier_ = 1.0f + (current_wave_ - 1) * 0.3f;
 }
 
 void WaveManager::SpawnEnemy() {

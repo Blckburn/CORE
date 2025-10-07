@@ -1,5 +1,6 @@
 #include "ui_manager.h"
 #include "wave_manager.h"
+#include "turret_manager.h"
 #include "graphics/shader.h"
 #include "graphics/font.h"
 #include <iostream>
@@ -94,6 +95,98 @@ bool UIManager::Initialize(Shader* shader) {
     
     std::cout << "UI Manager initialized successfully with font!" << std::endl;
     return true;
+}
+
+void UIManager::RenderWithTurrets(WaveManager* wave_manager, class TurretManager* turret_manager, int window_width, int window_height) {
+    if (!initialized_ || !wave_manager || !shader_) return;
+    
+    // Обновляем размеры viewport
+    viewport_width_ = window_width;
+    viewport_height_ = window_height;
+    
+    // Сохраняем текущее состояние
+    GLboolean depth_test_enabled = glIsEnabled(GL_DEPTH_TEST);
+    
+    // Отключаем depth test для UI
+    glDisable(GL_DEPTH_TEST);
+    
+    // Используем наш shader
+    shader_->Use();
+    
+    // Создаём ортографическую проекцию для 2D UI
+    glm::mat4 projection = glm::ortho(0.0f, (float)viewport_width_, (float)viewport_height_, 0.0f, -1.0f, 1.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    shader_->SetUniform("projection", projection);
+    shader_->SetUniform("view", view);
+    
+    // Получаем данные
+    int current_wave = wave_manager->GetCurrentWave();
+    int score = wave_manager->GetTotalScore();
+    float time_till_wave = wave_manager->GetTimeTillNextWave();
+    bool is_wave_active = wave_manager->IsWaveActive();
+    int money = wave_manager->GetCurrency();
+    
+    float ui_y = 20.0f;
+    float ui_spacing = 60.0f;
+    glm::vec3 cyan_color(0.0f, 1.0f, 1.0f);
+    glm::vec3 green_color(0.0f, 1.0f, 0.0f);
+    glm::vec3 red_color(1.0f, 0.0f, 0.0f);
+    glm::vec3 yellow_color(1.0f, 1.0f, 0.0f);
+    glm::vec3 white_color(1.0f, 1.0f, 1.0f);
+    
+    // Wave number
+    RenderText("WAVE", 20.0f, ui_y, 1.0f, cyan_color);
+    RenderNumber(current_wave, 20.0f, ui_y + 25.0f, 1.0f, cyan_color);
+    ui_y += ui_spacing;
+    
+    // Score
+    RenderText("SCORE", 20.0f, ui_y, 1.0f, green_color);
+    RenderNumber(score, 20.0f, ui_y + 25.0f, 1.0f, green_color);
+    ui_y += ui_spacing;
+    
+    // Currency
+    RenderText("CREDITS", 20.0f, ui_y, 1.0f, white_color);
+    RenderNumber(money, 20.0f, ui_y + 25.0f, 1.0f, white_color);
+    ui_y += ui_spacing;
+    
+    // Turret count
+    if (turret_manager) {
+        int turret_count = turret_manager->GetTurretCount();
+        int max_turrets = turret_manager->GetMaxTurrets();
+        glm::vec3 turret_color = (turret_count >= max_turrets) ? red_color : white_color;
+        RenderText("TURRETS", 20.0f, ui_y, 1.0f, turret_color);
+        RenderText(std::to_string(turret_count) + "/" + std::to_string(max_turrets), 
+                   20.0f, ui_y + 25.0f, 1.0f, turret_color);
+        ui_y += ui_spacing;
+    }
+    
+    // Time/enemies
+    if (!is_wave_active && time_till_wave > 0.0f) {
+        RenderText("NEXT", 20.0f, ui_y, 1.0f, yellow_color);
+        int seconds = static_cast<int>(time_till_wave);
+        RenderNumber(seconds, 20.0f, ui_y + 25.0f, 1.0f, yellow_color);
+    } else {
+        RenderText("ENEMIES", 20.0f, ui_y, 1.0f, red_color);
+        int enemies = wave_manager->GetEnemiesRemaining();
+        RenderNumber(enemies, 20.0f, ui_y + 25.0f, 1.0f, red_color);
+    }
+    
+    // Health bar
+    float health_percent = wave_manager->GetCoreHealth() / 10.0f;
+    RenderText("CORE", window_width - 220.0f, 20.0f, 1.0f, cyan_color);
+    RenderBar(window_width - 220.0f, 45.0f, 200.0f, 20.0f, health_percent, cyan_color);
+    
+    // Game status
+    if (wave_manager->IsGameOver()) {
+        RenderText("GAME OVER", window_width/2 - 60.0f, window_height/2 - 20.0f, 2.0f, red_color);
+    } else if (!is_wave_active && time_till_wave > 0.0f) {
+        RenderText("PREPARING...", window_width/2 - 80.0f, window_height/2 - 20.0f, 1.5f, yellow_color);
+    }
+    
+    // Восстанавливаем состояние
+    if (depth_test_enabled) {
+        glEnable(GL_DEPTH_TEST);
+    }
 }
 
 void UIManager::Render(WaveManager* wave_manager, int window_width, int window_height) {
