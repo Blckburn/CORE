@@ -186,12 +186,20 @@ bool Game::Initialize(Renderer* renderer, InputManager* input) {
 void Game::Update() {
     if (!initialized_) return;
     
-    // Handle mouse input for camera - only when right mouse button is held
+    // Handle mouse input for camera - only when right mouse button is held for a while
+    // This prevents camera rotation on quick right-clicks (for turret selection)
+    static float camera_rotate_hold_time = 0.0f;
     if (input_->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT)) {
-        glm::vec2 mouse_delta = input_->GetMouseDelta();
-        if (mouse_delta.x != 0.0f || mouse_delta.y != 0.0f) {
-            camera_->Rotate(mouse_delta.x, mouse_delta.y);
+        camera_rotate_hold_time += Time::GetDeltaTime();
+        // Only rotate camera if button held for more than 0.2 seconds
+        if (camera_rotate_hold_time > 0.2f) {
+            glm::vec2 mouse_delta = input_->GetMouseDelta();
+            if (mouse_delta.x != 0.0f || mouse_delta.y != 0.0f) {
+                camera_->Rotate(mouse_delta.x, mouse_delta.y);
+            }
         }
+    } else {
+        camera_rotate_hold_time = 0.0f;
     }
     
     // Handle scroll for zoom
@@ -561,10 +569,17 @@ void Game::Update() {
     
     // Handle right mouse button click for turret selection (when NOT in placement mode)
     static bool right_button_was_pressed = false;
+    static float right_button_hold_time = 0.0f;
     bool right_button_is_pressed = input_->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
+    
     if (state_ == GameState::Playing && !paused_ && !turret_placement_mode_) {
-        if (right_button_is_pressed && !right_button_was_pressed) {
-            // Right click - try to select turret
+        if (right_button_is_pressed) {
+            right_button_hold_time += Time::GetDeltaTime();
+        }
+        
+        // On release: if it was a quick click (< 0.2s), select turret
+        if (!right_button_is_pressed && right_button_was_pressed && right_button_hold_time < 0.2f) {
+            // Quick right click - try to select turret
             glm::vec2 mouse_pos = input_->GetMousePositionFramebuffer();
             int viewport_w = renderer_ ? renderer_->GetViewportWidth() : 1280;
             int viewport_h = renderer_ ? renderer_->GetViewportHeight() : 720;
@@ -578,8 +593,8 @@ void Game::Update() {
             glm::vec3 world_pos = ray_caster_->GetPlaneIntersection(
                 mouse_pos, camera_.get(), viewport_w, viewport_h, plane_center, plane_normal);
             
-            // Try to find turret at this position
-            Turret* turret = turret_manager_->GetTurretAtPosition(world_pos, 2.0f);
+            // Try to find turret at this position (increased radius to 4.0 for easier selection)
+            Turret* turret = turret_manager_->GetTurretAtPosition(world_pos, 4.0f);
             if (turret) {
                 selected_turret_ = turret;
                 turret_menu_open_ = true;
@@ -591,6 +606,10 @@ void Game::Update() {
                 selected_turret_ = nullptr;
                 turret_menu_open_ = false;
             }
+        }
+        
+        if (!right_button_is_pressed) {
+            right_button_hold_time = 0.0f;
         }
     }
     right_button_was_pressed = right_button_is_pressed;
