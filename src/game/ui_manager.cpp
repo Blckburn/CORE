@@ -496,10 +496,10 @@ void UIManager::RenderItemGrid(ItemManager* item_manager, InputManager* input, i
     text_shader_->SetUniform("text", 0);
     
     // Grid settings
-    const float grid_x = window_width - 350.0f; // Right side
-    const float grid_y = 50.0f;
-    const float cell_width = 160.0f;
-    const float cell_height = 30.0f;
+    const float grid_x = window_width - 550.0f; // Right side, more space from edge
+    const float grid_y = 100.0f; // Lower from top
+    const float cell_width = 250.0f; // Wider cells
+    const float cell_height = 35.0f; // Taller cells
     const int columns = 2;
     
     // Title
@@ -557,7 +557,7 @@ void UIManager::RenderItemGrid(ItemManager* item_manager, InputManager* input, i
         }
         
         text_shader_->SetUniform("text_color", color);
-        font_->RenderText(name, cell_x, cell_y, 0.6f, color);
+        font_->RenderText(name, cell_x, cell_y, 0.7f, color); // Bigger font
         
         // Click detection
         if (mouse_over && input->IsMouseButtonJustPressed(0)) {
@@ -569,9 +569,9 @@ void UIManager::RenderItemGrid(ItemManager* item_manager, InputManager* input, i
         if (col >= columns) {
             col = 0;
             current_x = grid_x;
-            current_y += cell_height + 5.0f;
+            current_y += cell_height + 10.0f; // More vertical spacing
         } else {
-            current_x += cell_width + 10.0f;
+            current_x += cell_width + 15.0f; // More horizontal spacing
         }
     }
 }
