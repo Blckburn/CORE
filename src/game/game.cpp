@@ -13,6 +13,7 @@
 #include "projectile.h"
 #include "wave_manager.h"
 #include "enemy.h"
+#include "ui_manager.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
@@ -129,6 +130,13 @@ bool Game::Initialize(Renderer* renderer, InputManager* input) {
     
     // Запускаем игру с первой волной
     wave_manager_->StartGame();
+    
+    // Initialize UI manager
+    ui_manager_ = std::make_unique<UIManager>();
+    if (!ui_manager_->Initialize(shader_.get())) {
+        std::cerr << "Failed to initialize UI manager!" << std::endl;
+        return false;
+    }
     
     // Initialize placement state
     turret_placement_mode_ = false;
@@ -418,6 +426,11 @@ void Game::Render() {
         // Render preview as wireframe
         turret_mesh_->RenderWireframe();
     }
+    
+    // Render UI (last, on top of everything)
+    if (ui_manager_ && wave_manager_) {
+        ui_manager_->Render(wave_manager_.get(), 1280, 720);
+    }
 }
 
 void Game::Shutdown() {
@@ -435,6 +448,8 @@ void Game::Shutdown() {
     ray_caster_.reset();
     turret_preview_.reset();
     projectile_manager_.reset();
+    wave_manager_.reset();
+    ui_manager_.reset();
     
     initialized_ = false;
     renderer_ = nullptr;

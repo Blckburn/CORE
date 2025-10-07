@@ -14,6 +14,7 @@ class RayCaster;
 class TurretPreview;
 class ProjectileManager;
 class WaveManager;
+class UIManager;
 
 class Game {
 public:
@@ -44,6 +45,7 @@ private:
     std::unique_ptr<TurretPreview> turret_preview_;
     std::unique_ptr<ProjectileManager> projectile_manager_;
     std::unique_ptr<WaveManager> wave_manager_;
+    std::unique_ptr<UIManager> ui_manager_;
     
     bool initialized_;
     
