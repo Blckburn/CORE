@@ -371,12 +371,22 @@ void Game::Update() {
                 wave_manager_->StartGame();
                 state_ = GameState::Playing;
                 paused_ = false;
+                // Reset turret menu state
+                turret_menu_open_ = false;
+                selected_turret_ = nullptr;
+                selected_inventory_index_ = -1;
+                inventory_open_ = false;
             } else if (menu_index == 1) { // Main Menu
                 std::cout << "Returning to main menu..." << std::endl;
                 state_ = GameState::MainMenu;
                 if (enemy_spawner_) enemy_spawner_->ClearAllEnemies();
                 if (turret_manager_) turret_manager_->ClearAllTurrets();
                 turret_cost_ = 1;
+                // Reset turret menu state
+                turret_menu_open_ = false;
+                selected_turret_ = nullptr;
+                selected_inventory_index_ = -1;
+                inventory_open_ = false;
             }
         }
         return;
@@ -432,6 +442,11 @@ void Game::Update() {
             if (turret_manager_) turret_manager_->ClearAllTurrets();
             // Reset waves
             if (wave_manager_) wave_manager_->StartGame();
+            // Reset turret menu state
+            turret_menu_open_ = false;
+            selected_turret_ = nullptr;
+            selected_inventory_index_ = -1;
+            inventory_open_ = false;
             r_hold_time = 0.0f;
         }
     } else {
@@ -698,11 +713,18 @@ void Game::Update() {
     }
     right_button_was_pressed = right_button_is_pressed;
     
-    // Update wave manager (контролирует спавн врагов)
-    if (state_ == GameState::Playing && !paused_) wave_manager_->Update(Time::GetDeltaTime());
+    // Update wave manager (контролирует спавн врагов) - pause when turret menu is open
+    bool game_paused = paused_ || turret_menu_open_ || inventory_open_;
+    if (state_ == GameState::Playing) {
+        if (!game_paused) {
+            wave_manager_->Update(Time::GetDeltaTime());
+        } else {
+            // Still update economy even when paused (for credits)
+            wave_manager_->UpdateEconomy();
+        }
+    }
     
     // Update game systems (pause when turret menu or inventory is open)
-    bool game_paused = paused_ || turret_menu_open_ || inventory_open_;
     if (state_ == GameState::Playing && !game_paused) {
         enemy_spawner_->Update(Time::GetDeltaTime());
         turret_manager_->Update(Time::GetDeltaTime(), enemy_spawner_->GetEnemies());

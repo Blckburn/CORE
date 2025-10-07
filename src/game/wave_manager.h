@@ -33,6 +33,9 @@ public:
     void OnEnemyReachedCore();
     void SetPreparationDuration(float seconds) { wave_delay_duration_ = seconds; }
     void SetInitialPreparation(float seconds) { wave_delay_timer_ = seconds; }
+    
+    // Обновление только экономики (для паузы)
+    void UpdateEconomy();
 
     // Экономика
     void AddCurrency(int amount) { currency_ += amount; }

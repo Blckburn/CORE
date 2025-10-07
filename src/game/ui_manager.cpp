@@ -324,8 +324,17 @@ void UIManager::RenderTurretMenu(class Turret* turret, class Camera* camera, cla
     float menu_x = window_width / 2.0f - menu_width / 2.0f;
     float menu_y = window_height - menu_height - 20.0f;
     
-    // Dim background for menu area
-    RenderDimBackground(window_width, window_height, 0.3f);
+    // Semi-transparent background instead of full black
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.5f); // Semi-transparent black
+    glBegin(GL_QUADS);
+    glVertex2f(0.0f, 0.0f);
+    glVertex2f((float)window_width, 0.0f);
+    glVertex2f((float)window_width, (float)window_height);
+    glVertex2f(0.0f, (float)window_height);
+    glEnd();
+    glDisable(GL_BLEND);
     
     text_shader_->Use();
     glm::mat4 text_projection = glm::ortho(0.0f, (float)viewport_width_, (float)viewport_height_, 0.0f);

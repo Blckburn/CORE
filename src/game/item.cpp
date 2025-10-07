@@ -93,7 +93,7 @@ void Item::SetColorByRarity() {
             color_ = glm::vec3(1.0f, 1.0f, 1.0f); // White
             break;
         case ItemRarity::Uncommon:
-            color_ = glm::vec3(0.0f, 1.0f, 0.0f); // Green
+            color_ = glm::vec3(0.2f, 0.8f, 0.2f); // Dark Green (more visible on grass)
             break;
         case ItemRarity::Rare:
             color_ = glm::vec3(0.3f, 0.5f, 1.0f); // Blue

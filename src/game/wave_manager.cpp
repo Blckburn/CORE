@@ -93,6 +93,11 @@ void WaveManager::SpawnEnemy() {
     enemies_spawned_this_wave_++;
 }
 
+void WaveManager::UpdateEconomy() {
+    // Only update currency and score, not waves/enemies
+    // This allows credits to be awarded even when game is paused for turret menu
+}
+
 void WaveManager::OnEnemyDestroyed(const glm::vec3& enemy_position) {
     if (enemies_remaining_ > 0) {
         enemies_remaining_--;
