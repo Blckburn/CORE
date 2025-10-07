@@ -655,3 +655,4 @@ CORE represents a well-structured 3D Tower Defense engine with modern architectu
 - **Performance**: Optimized rendering
 
 The project is ready for further development and can serve as a foundation for more complex game projects.
+

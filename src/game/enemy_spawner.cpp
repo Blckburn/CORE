@@ -1,9 +1,11 @@
 #include "enemy_spawner.h"
+#include "wave_manager.h"
 #include <glm/gtc/constants.hpp>
 #include <algorithm>
 #include <iostream>
 
 EnemySpawner::EnemySpawner() :
+    wave_manager_(nullptr),
     spawning_enabled_(false),
     spawn_rate_(1.0f),          // 1 enemy per second
     spawn_radius_(25.0f),       // 25 units from center
@@ -33,6 +35,11 @@ void EnemySpawner::Update(float delta_time) {
     for (auto& enemy : enemies_) {
         if (enemy && enemy->IsAlive()) {
             enemy->Update(delta_time);
+            
+            // Check if enemy reached core and notify wave manager
+            if (enemy->HasReachedCore() && wave_manager_) {
+                wave_manager_->OnEnemyReachedCore();
+            }
         }
     }
     
@@ -116,3 +123,4 @@ void EnemySpawner::UpdateSpawnTimer(float delta_time) {
         time_since_last_spawn_ = 0.0f;
     }
 }
+

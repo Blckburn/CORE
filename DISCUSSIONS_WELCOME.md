@@ -75,3 +75,4 @@ We're excited to have you here and can't wait to see what amazing discussions an
 **CORE** - Where Strategy Meets Minimalism 🎯✨
 
 *Happy coding and gaming!* 🚀
+

@@ -11,6 +11,8 @@
 #include "turret_preview.h"
 #include "projectile_manager.h"
 #include "projectile.h"
+#include "wave_manager.h"
+#include "enemy.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
@@ -113,6 +115,20 @@ bool Game::Initialize(Renderer* renderer, InputManager* input) {
     
     // Connect turret manager to projectile manager
     turret_manager_->SetProjectileManager(projectile_manager_.get());
+    
+    // Initialize wave manager
+    wave_manager_ = std::make_unique<WaveManager>();
+    wave_manager_->SetEnemySpawner(enemy_spawner_.get());
+    
+    // Connect enemy spawner and projectile manager to wave manager
+    enemy_spawner_->SetWaveManager(wave_manager_.get());
+    projectile_manager_->SetWaveManager(wave_manager_.get());
+    
+    // Теперь спавн контролируется системой волн, отключаем автоматический спавн
+    enemy_spawner_->StopSpawning();
+    
+    // Запускаем игру с первой волной
+    wave_manager_->StartGame();
     
     // Initialize placement state
     turret_placement_mode_ = false;
@@ -342,6 +358,9 @@ void Game::Update() {
     }
     
     left_button_was_pressed = left_button_is_pressed;
+    
+    // Update wave manager (контролирует спавн врагов)
+    wave_manager_->Update(Time::GetDeltaTime());
     
     // Update game systems
     enemy_spawner_->Update(Time::GetDeltaTime());

@@ -25,6 +25,7 @@ public:
     float GetMaxHealth() const { return max_health_; }
     bool IsAlive() const { return alive_; }
     glm::vec3 GetColor() const { return color_; }
+    bool HasReachedCore() const { return has_reached_core_; }
 
     // Setters
     void SetTargetPosition(const glm::vec3& target) { target_position_ = target; }
@@ -48,6 +49,7 @@ private:
     glm::vec3 color_;           // Enemy color (red for enemies)
     bool alive_;                // Is enemy alive
     bool initialized_;          // Is enemy initialized
+    bool has_reached_core_;     // Has enemy reached the core
 
     // Movement calculations
     glm::vec3 direction_;       // Direction to target
@@ -56,3 +58,4 @@ private:
     // Update movement direction
     void UpdateDirection();
 };
+

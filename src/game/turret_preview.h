@@ -46,3 +46,4 @@ private:
     glm::vec3 valid_color_;
     glm::vec3 invalid_color_;
 };
+

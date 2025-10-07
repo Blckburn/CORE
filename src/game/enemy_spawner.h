@@ -6,6 +6,8 @@
 #include <glm/glm.hpp>
 #include <random>
 
+class WaveManager;
+
 class EnemySpawner {
 public:
     EnemySpawner();
@@ -26,6 +28,9 @@ public:
     void SetSpawnRate(float rate) { spawn_rate_ = rate; }
     void SetSpawnRadius(float radius) { spawn_radius_ = radius; }
 
+    // Wave manager integration
+    void SetWaveManager(WaveManager* wave_manager) { wave_manager_ = wave_manager; }
+
     // Enemy management
     const std::vector<std::unique_ptr<Enemy>>& GetEnemies() const { return enemies_; }
     int GetEnemyCount() const { return static_cast<int>(enemies_.size()); }
@@ -39,6 +44,7 @@ public:
 
 private:
     std::vector<std::unique_ptr<Enemy>> enemies_;
+    WaveManager* wave_manager_;
     
     // Spawn parameters
     bool spawning_enabled_;
@@ -58,3 +64,4 @@ private:
     // Spawn timer
     void UpdateSpawnTimer(float delta_time);
 };
+

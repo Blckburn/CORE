@@ -28,3 +28,4 @@ private:
     float clear_color_[4];
 };
 
+

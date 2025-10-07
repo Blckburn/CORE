@@ -50,6 +50,7 @@ set(SOURCES
     src/game/projectile.cpp
     src/game/projectile_manager.cpp
     src/game/turret_preview.cpp
+    src/game/wave_manager.cpp
     src/utils/math.cpp
     src/utils/debug.cpp
 )
@@ -74,6 +75,7 @@ set(HEADERS
     src/game/projectile.h
     src/game/projectile_manager.h
     src/game/turret_preview.h
+    src/game/wave_manager.h
     src/utils/math.h
     src/utils/debug.h
 )

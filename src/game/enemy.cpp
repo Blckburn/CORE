@@ -12,6 +12,7 @@ Enemy::Enemy() :
     color_(1.0f, 0.0f, 0.0f), // Red color for enemies
     alive_(false),
     initialized_(false),
+    has_reached_core_(false),
     direction_(0.0f),
     distance_to_target_(0.0f) {
 }
@@ -41,8 +42,9 @@ void Enemy::Update(float delta_time) {
     MoveTowardsTarget(delta_time);
     
     // Check if reached target (center cube)
-    if (distance_to_target_ < 1.0f) {
+    if (distance_to_target_ < 1.0f && !has_reached_core_) {
         std::cout << "Enemy reached center cube!" << std::endl;
+        has_reached_core_ = true;
         Die();
     }
 }
@@ -97,3 +99,4 @@ void Enemy::UpdateDirection() {
         direction_ = glm::vec3(0.0f);
     }
 }
+

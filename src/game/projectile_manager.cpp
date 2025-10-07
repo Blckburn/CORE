@@ -1,11 +1,15 @@
 #include "projectile_manager.h"
 #include "projectile.h"
 #include "enemy.h"
+#include "wave_manager.h"
 #include <iostream>
 #include <limits>
 
 ProjectileManager::ProjectileManager()
-    : default_speed_(30.0f), default_damage_(25), default_color_(0.0f, 1.0f, 1.0f) {
+    : wave_manager_(nullptr)
+    , default_speed_(30.0f)
+    , default_damage_(25)
+    , default_color_(0.0f, 1.0f, 1.0f) {
 }
 
 ProjectileManager::~ProjectileManager() {
@@ -54,6 +58,11 @@ void ProjectileManager::Update(float delta_time, const std::vector<std::unique_p
                         enemy->TakeDamage(projectile->GetDamage());
                         projectile->SetActive(false); // Mark projectile as inactive
                         std::cout << "Projectile hit enemy for " << projectile->GetDamage() << " damage!" << std::endl;
+                        
+                        // Notify wave manager if enemy is destroyed
+                        if (!enemy->IsAlive() && wave_manager_) {
+                            wave_manager_->OnEnemyDestroyed();
+                        }
                         break;
                     }
                 }
