@@ -1,8 +1,10 @@
 #include "ui_manager.h"
 #include "wave_manager.h"
 #include "turret_manager.h"
+#include "core/input.h"
 #include "graphics/shader.h"
 #include "graphics/font.h"
+#include "graphics/camera.h"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -300,6 +302,54 @@ void UIManager::RenderTooltip(const std::string& text, float x, float y, float s
     text_shader_->SetUniform("text", 0);
     font_->RenderText(text, x, y, scale, color);
     if (depth_enabled) glEnable(GL_DEPTH_TEST);
+}
+
+void UIManager::RenderTurretMenu(const glm::vec3& turret_pos, class Camera* camera, class InputManager* input, int window_width, int window_height, bool& sell_clicked) {
+    if (!font_ || !text_shader_ || !camera || !input) return;
+    
+    sell_clicked = false;
+    
+    // Project 3D turret position to 2D screen space
+    glm::mat4 view = camera->GetViewMatrix();
+    glm::mat4 projection = camera->GetProjectionMatrix();
+    glm::vec4 clip_pos = projection * view * glm::vec4(turret_pos, 1.0f);
+    
+    if (clip_pos.w <= 0) return; // Behind camera
+    
+    glm::vec3 ndc = glm::vec3(clip_pos) / clip_pos.w;
+    float screen_x = (ndc.x * 0.5f + 0.5f) * window_width;
+    float screen_y = (1.0f - (ndc.y * 0.5f + 0.5f)) * window_height;
+    
+    // Menu position (above turret)
+    float menu_x = screen_x - 40.0f;
+    float menu_y = screen_y - 60.0f;
+    float button_width = 90.0f;
+    float button_height = 20.0f;
+    
+    GLboolean depth_enabled = glIsEnabled(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
+    
+    // Check if mouse is over button
+    glm::vec2 mouse = input->GetMousePosition();
+    bool mouse_over = (mouse.x >= menu_x && mouse.x <= menu_x + button_width &&
+                       mouse.y >= menu_y && mouse.y <= menu_y + button_height);
+    
+    // Render "SELL" button
+    text_shader_->Use();
+    glm::mat4 text_projection = glm::ortho(0.0f, (float)viewport_width_, (float)viewport_height_, 0.0f);
+    text_shader_->SetUniform("projection", text_projection);
+    text_shader_->SetUniform("text", 0);
+    
+    glm::vec3 button_color = mouse_over ? glm::vec3(1.0f, 0.5f, 0.0f) : glm::vec3(1.0f, 1.0f, 0.0f);
+    text_shader_->SetUniform("text_color", button_color);
+    font_->RenderText("SELL (50%)", menu_x, menu_y, 0.8f, button_color);
+    
+    if (depth_enabled) glEnable(GL_DEPTH_TEST);
+    
+    // Check for click on button
+    if (mouse_over && input->IsMouseButtonJustPressed(0)) {
+        sell_clicked = true;
+    }
 }
 
 void UIManager::RenderMainMenu(int window_width, int window_height, int selected_index) {

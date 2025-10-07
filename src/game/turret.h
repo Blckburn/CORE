@@ -30,6 +30,7 @@ public:
     glm::vec3 GetColor() const { return color_; }
     float GetRotation() const { return rotation_; }
     Enemy* GetCurrentTarget() const { return current_target_; }
+    int GetCost() const { return cost_; }
 
     // Setters
     void SetPosition(const glm::vec3& position) { position_ = position; }
@@ -38,6 +39,7 @@ public:
     void SetFireRate(float rate) { fire_rate_ = rate; }
     void SetColor(const glm::vec3& color) { color_ = color; }
     void SetActive(bool active) { active_ = active; }
+    void SetCost(int cost) { cost_ = cost; }
 
     // Targeting
     void UpdateTarget(const std::vector<std::unique_ptr<Enemy>>& enemies);
@@ -60,6 +62,7 @@ private:
     glm::vec3 color_;           // Turret color (green for turrets)
     bool active_;               // Is turret active
     bool initialized_;          // Is turret initialized
+    int cost_;                  // Cost when placed (for sell refund)
 
     // Targeting
     Enemy* current_target_;     // Current target enemy

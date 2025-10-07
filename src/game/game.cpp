@@ -164,6 +164,11 @@ bool Game::Initialize(Renderer* renderer, InputManager* input) {
     preview_position_ = glm::vec3(0.0f);
     preview_valid_ = false;
     
+    // Initialize turret management state
+    selected_turret_ = nullptr;
+    turret_menu_open_ = false;
+    turret_menu_position_ = glm::vec3(0.0f);
+    
     initialized_ = true;
     std::cout << "Game initialized successfully!" << std::endl;
     std::cout << "=== CONTROLS ===" << std::endl;
@@ -525,6 +530,13 @@ void Game::Update() {
                               << preview_position_.x << ", " 
                               << preview_position_.y << ", " 
                               << preview_position_.z << std::endl;
+                    
+                    // Set the cost of the turret we just placed
+                    auto& turrets = turret_manager_->GetTurrets();
+                    if (!turrets.empty() && turrets.back()) {
+                        turrets.back()->SetCost(turret_cost_);
+                    }
+                    
                     // Increase turret cost for next turret (progressive pricing)
                     turret_cost_ += 1; // Each turret costs 1 more than the previous
                     std::cout << "Next turret will cost: " << turret_cost_ << std::endl;
@@ -546,6 +558,42 @@ void Game::Update() {
     }
     
     left_button_was_pressed = left_button_is_pressed;
+    
+    // Handle right mouse button click for turret selection (when NOT in placement mode)
+    static bool right_button_was_pressed = false;
+    bool right_button_is_pressed = input_->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
+    if (state_ == GameState::Playing && !paused_ && !turret_placement_mode_) {
+        if (right_button_is_pressed && !right_button_was_pressed) {
+            // Right click - try to select turret
+            glm::vec2 mouse_pos = input_->GetMousePositionFramebuffer();
+            int viewport_w = renderer_ ? renderer_->GetViewportWidth() : 1280;
+            int viewport_h = renderer_ ? renderer_->GetViewportHeight() : 720;
+            
+            // Cast ray from mouse to 3D world
+            glm::vec3 camera_pos = camera_->GetPosition();
+            glm::vec3 camera_dir = glm::normalize(camera_->GetTarget() - camera_pos);
+            float placement_distance = 15.0f;
+            glm::vec3 plane_center = camera_pos + camera_dir * placement_distance;
+            glm::vec3 plane_normal = camera_dir;
+            glm::vec3 world_pos = ray_caster_->GetPlaneIntersection(
+                mouse_pos, camera_.get(), viewport_w, viewport_h, plane_center, plane_normal);
+            
+            // Try to find turret at this position
+            Turret* turret = turret_manager_->GetTurretAtPosition(world_pos, 2.0f);
+            if (turret) {
+                selected_turret_ = turret;
+                turret_menu_open_ = true;
+                turret_menu_position_ = turret->GetPosition();
+                std::cout << "Turret selected at: " << turret->GetPosition().x << ", " 
+                          << turret->GetPosition().y << ", " << turret->GetPosition().z << std::endl;
+            } else {
+                // Clicked empty space - close menu
+                selected_turret_ = nullptr;
+                turret_menu_open_ = false;
+            }
+        }
+    }
+    right_button_was_pressed = right_button_is_pressed;
     
     // Update wave manager (контролирует спавн врагов)
     if (state_ == GameState::Playing && !paused_) wave_manager_->Update(Time::GetDeltaTime());
@@ -605,8 +653,13 @@ void Game::Render() {
                 turret_model = glm::rotate(turret_model, glm::radians(turret->GetRotation()), glm::vec3(0.0f, 1.0f, 0.0f));
                 shader_->SetUniform("model", turret_model);
                 
-                // Set turret color (green)
-                shader_->SetUniform("color", turret->GetColor());
+                // Highlight selected turret
+                bool is_selected = (selected_turret_ == turret.get());
+                glm::vec3 turret_color = is_selected ? 
+                    glm::vec3(1.0f, 1.0f, 0.0f) : // Yellow when selected
+                    turret->GetColor();            // Green normally
+                
+                shader_->SetUniform("color", turret_color);
                 
                 // Render turret cube as wireframe
                 turret_mesh_->RenderWireframe();
@@ -685,6 +738,29 @@ void Game::Render() {
             float tip_x = mouse.x + 16.0f;
             float tip_y = mouse.y + 24.0f;
             ui_manager_->RenderTooltip("COST: " + std::to_string(turret_cost), tip_x, tip_y, 0.7f, tooltip_color);
+        }
+        
+        // Turret menu when turret is selected
+        if (state_ == GameState::Playing && turret_menu_open_ && selected_turret_) {
+            bool sell_clicked = false;
+            ui_manager_->RenderTurretMenu(turret_menu_position_, camera_.get(), input_, w, h, sell_clicked);
+            
+            // Handle sell click
+            if (sell_clicked && selected_turret_) {
+                // Calculate refund (50% of original cost)
+                int original_cost = selected_turret_->GetCost();
+                int refund = std::max(1, original_cost / 2); // At least 1 credit back
+                
+                std::cout << "Selling turret (cost: " << original_cost << ", refund: " << refund << ")" << std::endl;
+                
+                // Remove turret and refund money
+                if (turret_manager_->RemoveTurretAtPosition(turret_menu_position_, 1.5f)) {
+                    wave_manager_->AddCurrency(refund);
+                    std::cout << "Turret sold for " << refund << " credits" << std::endl;
+                    selected_turret_ = nullptr;
+                    turret_menu_open_ = false;
+                }
+            }
         }
     }
 }

@@ -14,6 +14,7 @@ Turret::Turret() :
     color_(0.0f, 1.0f, 0.0f),   // Green color for turrets
     active_(true),
     initialized_(false),
+    cost_(0),                   // Will be set when placed
     current_target_(nullptr),
     rotation_(0.0f),
     target_rotation_(0.0f),

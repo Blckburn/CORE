@@ -10,6 +10,7 @@ class Mesh;
 class Camera;
 class EnemySpawner;
 class TurretManager;
+class Turret;
 class RayCaster;
 class TurretPreview;
 class ProjectileManager;
@@ -53,6 +54,11 @@ private:
     bool turret_placement_mode_;
     glm::vec3 preview_position_;
     bool preview_valid_;
+    
+    // Turret management state
+    Turret* selected_turret_;
+    bool turret_menu_open_;
+    glm::vec3 turret_menu_position_;
 
     // Economy
     int turret_cost_ = 1; // Начальная стоимость первой башни
