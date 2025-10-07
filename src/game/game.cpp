@@ -569,22 +569,33 @@ void Game::Update() {
     left_button_was_pressed = left_button_is_pressed;
     
     // Update hovered turret (when NOT in placement mode)
-    if (state_ == GameState::Playing && !paused_ && !turret_placement_mode_) {
+    if (state_ == GameState::Playing && !paused_ && !turret_placement_mode_ && turret_manager_) {
         glm::vec2 mouse_pos = input_->GetMousePositionFramebuffer();
         int viewport_w = renderer_ ? renderer_->GetViewportWidth() : 1280;
         int viewport_h = renderer_ ? renderer_->GetViewportHeight() : 720;
         
-        // Cast ray from mouse to 3D world
-        glm::vec3 camera_pos = camera_->GetPosition();
-        glm::vec3 camera_dir = glm::normalize(camera_->GetTarget() - camera_pos);
-        float placement_distance = 15.0f;
-        glm::vec3 plane_center = camera_pos + camera_dir * placement_distance;
-        glm::vec3 plane_normal = camera_dir;
-        glm::vec3 world_pos = ray_caster_->GetPlaneIntersection(
-            mouse_pos, camera_.get(), viewport_w, viewport_h, plane_center, plane_normal);
+        // Check ray-sphere intersection with each turret
+        hovered_turret_ = nullptr;
+        float closest_distance = 1000000.0f;
         
-        // Update hovered turret
-        hovered_turret_ = turret_manager_->GetTurretAtPosition(world_pos, 4.0f);
+        const auto& turrets = turret_manager_->GetTurrets();
+        for (const auto& turret : turrets) {
+            if (!turret || !turret->IsActive()) continue;
+            
+            // Check intersection with sphere around turret (radius 2.0)
+            glm::vec3 intersection = ray_caster_->GetSphereIntersection(
+                mouse_pos, camera_.get(), viewport_w, viewport_h, 
+                turret->GetPosition(), 2.0f);
+            
+            // If we hit this turret, check if it's closer than previous
+            if (intersection != glm::vec3(0.0f)) {
+                float distance = glm::length(intersection - camera_->GetPosition());
+                if (distance < closest_distance) {
+                    closest_distance = distance;
+                    hovered_turret_ = turret.get();
+                }
+            }
+        }
     } else {
         hovered_turret_ = nullptr;
     }
