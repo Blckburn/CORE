@@ -16,6 +16,7 @@ public:
     void SetPosition(const glm::vec3& position);
     void SetTarget(const glm::vec3& target);
     void SetZoom(float zoom);
+    void SetAspect(float aspect);
     
     glm::vec3 GetPosition() const { return position_; }
     glm::vec3 GetTarget() const { return target_; }
@@ -32,6 +33,7 @@ private:
     float zoom_;
     float rotation_x_;
     float rotation_y_;
+    float aspect_ratio_;
     
     glm::mat4 view_matrix_;
     glm::mat4 projection_matrix_;

@@ -78,7 +78,7 @@ void Window::PollEvents() {
 }
 
 bool Window::ShouldClose() const {
-    return window_ ? !glfwWindowShouldClose(window_) : true;
+    return window_ ? glfwWindowShouldClose(window_) : true;
 }
 
 void Window::SetShouldClose(bool should_close) {
@@ -117,6 +117,7 @@ void Window::FramebufferSizeCallback(GLFWwindow* window, int width, int height) 
         win->width_ = width;
         win->height_ = height;
         glViewport(0, 0, width, height);
+        // Update camera aspect via renderer is handled elsewhere; here we just log size.
         std::cout << "Window resized to: " << width << "x" << height << std::endl;
     }
 }

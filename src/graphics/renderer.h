@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include "camera.h"
 
 class Window;
 class Camera;
@@ -20,6 +21,9 @@ public:
     void Clear();
     
     void SetCamera(std::shared_ptr<Camera> camera);
+    int GetViewportWidth() const;
+    int GetViewportHeight() const;
+    void SetWindowSize(int width, int height);
     
 private:
     Window* window_;

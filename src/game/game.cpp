@@ -147,8 +147,10 @@ bool Game::Initialize(Renderer* renderer, InputManager* input) {
     // Теперь спавн контролируется системой волн, отключаем автоматический спавн
     enemy_spawner_->StopSpawning();
     
-    // Запускаем игру с первой волной
-    wave_manager_->StartGame();
+    // Начинаем с главного меню, игра на паузе
+    state_ = GameState::MainMenu;
+    paused_ = true;
+    // Инициализируем, но не запускаем волны до старта игры
     
     // Initialize UI manager
     ui_manager_ = std::make_unique<UIManager>();
@@ -196,6 +198,104 @@ void Game::Update() {
     }
     
     // Handle keyboard for testing - use continuous input for smooth movement
+    // Menu navigation
+    if (state_ == GameState::MainMenu) {
+        int &menu_index = main_menu_index_;
+        if (input_->IsKeyJustPressed(265)) { menu_index = (menu_index + 2) % 3; }
+        if (input_->IsKeyJustPressed(264)) { menu_index = (menu_index + 1) % 3; }
+        int w = renderer_ ? renderer_->GetViewportWidth() : 1280;
+        int h = renderer_ ? renderer_->GetViewportHeight() : 720;
+        // Mouse hover detection
+        glm::vec2 mouse = input_->GetMousePosition();
+        float cx = w / 2.0f - 100.0f;
+        float cy = h / 2.0f - 60.0f;
+        
+        // DEBUG: Print menu coords every 60 frames
+        static int menu_debug_counter = 0;
+        if (++menu_debug_counter % 60 == 0) {
+            std::cout << "DEBUG MENU: viewport=" << w << "x" << h 
+                      << ", mouse=" << mouse.x << "," << mouse.y 
+                      << ", menu_center=" << cx << "," << cy << std::endl;
+        }
+        
+        for (int i = 0; i < 3; ++i) {
+            float rx = cx - 12.0f;
+            float ry = cy + i * 30.0f - 6.0f;
+            float rw = 240.0f;
+            float rh = 26.0f;
+            if (mouse.x >= rx && mouse.x <= rx + rw && mouse.y >= ry && mouse.y <= ry + rh) {
+                menu_index = i;
+                if (input_->IsMouseButtonJustPressed(0)) { // LMB click
+                    std::cout << "DEBUG: Menu item " << menu_index << " clicked!" << std::endl;
+                    if (menu_index == 0) {
+                        std::cout << "Starting game..." << std::endl;
+                        wave_manager_->StartGame();
+                        state_ = GameState::Playing;
+                        paused_ = false;
+                    } else if (menu_index == 1) {
+                        std::cout << "Opening options..." << std::endl;
+                        state_ = GameState::Options;
+                    } else if (menu_index == 2) {
+                        std::cout << "Exit requested from main menu" << std::endl;
+                    }
+                }
+            }
+        }
+        if (input_->IsKeyJustPressed(257) || input_->IsKeyJustPressed(335)) { // Enter
+            if (menu_index == 0) {
+                wave_manager_->StartGame();
+                state_ = GameState::Playing;
+                paused_ = false;
+            } else if (menu_index == 1) {
+                state_ = GameState::Options;
+            } else if (menu_index == 2) {
+                std::cout << "Exit requested from main menu" << std::endl;
+            }
+        }
+        return;
+    }
+    if (state_ == GameState::Options) {
+        // Navigate options with Up/Down, apply with Enter, back with Esc
+        if (input_->IsKeyJustPressed(265)) { // Up
+            options_selected_index_ = std::max(0, options_selected_index_ - 1);
+        }
+        if (input_->IsKeyJustPressed(264)) { // Down
+            options_selected_index_ = std::min(3, options_selected_index_ + 1);
+        }
+        // Mouse hover/click
+        int w = renderer_ ? renderer_->GetViewportWidth() : 1280;
+        int h = renderer_ ? renderer_->GetViewportHeight() : 720;
+        glm::vec2 mouse = input_->GetMousePosition();
+        float cx = w / 2.0f - 140.0f;
+        float cy = h / 2.0f - 90.0f;
+        for (int i = 0; i < 4; ++i) {
+            float rx = cx - 12.0f;
+            float ry = cy + i * 30.0f - 6.0f;
+            float rw = 300.0f;
+            float rh = 26.0f;
+            if (mouse.x >= rx && mouse.x <= rx + rw && mouse.y >= ry && mouse.y <= ry + rh) {
+                options_selected_index_ = i;
+                if (input_->IsMouseButtonJustPressed(0)) {
+                    int widths[4] = {1280, 1920, 2560, 3840};
+                    int heights[4] = {720, 1080, 1440, 2160};
+                    int wset = widths[options_selected_index_];
+                    int hset = heights[options_selected_index_];
+                    if (renderer_) renderer_->SetWindowSize(wset, hset);
+                }
+            }
+        }
+        if (input_->IsKeyJustPressed(257) || input_->IsKeyJustPressed(335)) { // Enter
+            int widths[4] = {1280, 1920, 2560, 3840};
+            int heights[4] = {720, 1080, 1440, 2160};
+            int w = widths[options_selected_index_];
+            int h = heights[options_selected_index_];
+            if (renderer_) renderer_->SetWindowSize(w, h);
+        }
+        if (input_->IsKeyJustPressed(256)) { // Esc
+            state_ = GameState::MainMenu;
+        }
+        return;
+    }
     if (input_->IsKeyPressed(65)) { // GLFW_KEY_A
         camera_->Rotate(-10.0f, 0.0f);
     }
@@ -216,6 +316,15 @@ void Game::Update() {
     if (input_->IsKeyPressed(69)) { // GLFW_KEY_E
         camera_->SetZoom(camera_->GetZoom() - 2.0f);
     }
+
+    // Toggle pause with P (edge trigger) when playing
+    static bool p_key_was_pressed = false;
+    bool p_key_is_pressed = input_->IsKeyPressed(80); // GLFW_KEY_P
+    if (state_ == GameState::Playing && p_key_is_pressed && !p_key_was_pressed) {
+        paused_ = !paused_;
+        std::cout << (paused_ ? "Game paused" : "Game resumed") << std::endl;
+    }
+    p_key_was_pressed = p_key_is_pressed;
 
     // Hold R for 2 seconds to restart the game
     static float r_hold_time = 0.0f;
@@ -239,15 +348,15 @@ void Game::Update() {
     }
     
     // Update camera
-    camera_->Update(Time::GetDeltaTime());
+    if (state_ == GameState::Playing && !paused_) camera_->Update(Time::GetDeltaTime());
     
     // Update enemy spawner and enemies
-    if (enemy_spawner_) {
+    if (state_ == GameState::Playing && !paused_ && enemy_spawner_) {
         enemy_spawner_->Update(Time::GetDeltaTime());
     }
     
     // Update turret manager and turrets
-    if (turret_manager_ && enemy_spawner_) {
+    if (state_ == GameState::Playing && !paused_ && turret_manager_ && enemy_spawner_) {
         const auto& enemies = enemy_spawner_->GetEnemies();
         turret_manager_->Update(Time::GetDeltaTime(), enemies);
     }
@@ -272,8 +381,9 @@ void Game::Update() {
     t_key_was_pressed = t_key_is_pressed;
     
     // Update preview position when in placement mode
-    if (turret_placement_mode_) {
-        glm::vec2 mouse_pos = input_->GetMousePosition();
+    if (state_ == GameState::Playing && turret_placement_mode_) {
+        // Use framebuffer-space mouse position (future-proof for HiDPI)
+        glm::vec2 mouse_pos = input_->GetMousePositionFramebuffer();
         
         // Debug: Show mouse position and camera info
         static int preview_debug_counter = 0;
@@ -306,8 +416,11 @@ void Game::Update() {
         glm::vec3 plane_normal = camera_direction;
         
         // Get intersection with this 3D plane
+        // Use actual viewport size instead of hardcoded values
+        int viewport_w = renderer_ ? renderer_->GetViewportWidth() : 1280;
+        int viewport_h = renderer_ ? renderer_->GetViewportHeight() : 720;
         glm::vec3 plane_intersection = ray_caster_->GetPlaneIntersection(
-            mouse_pos, camera_.get(), 3840, 2054, plane_center, plane_normal);
+            mouse_pos, camera_.get(), viewport_w, viewport_h, plane_center, plane_normal);
         
         // Debug: Show intersection result
         if (preview_debug_counter % 60 == 0) {
@@ -336,15 +449,17 @@ void Game::Update() {
         }
         
         // Place turret on left click
-        if (left_button_is_pressed && !left_button_was_pressed) {
+        if (!paused_ && left_button_is_pressed && !left_button_was_pressed) {
             std::cout << "Left click detected in placement mode!" << std::endl;
             std::cout << "Preview position: (" << preview_position_.x << ", " 
                       << preview_position_.y << ", " << preview_position_.z << ")" << std::endl;
             std::cout << "Preview valid: " << preview_valid_ << std::endl;
             
             if (preview_valid_) {
-                std::cout << "Attempting to place turret..." << std::endl;
-                if (turret_manager_->PlaceTurret(preview_position_)) {
+                // Economy: try spend currency
+                if (wave_manager_->SpendCurrency(turret_cost_)) {
+                    std::cout << "Attempting to place turret..." << std::endl;
+                    if (turret_manager_->PlaceTurret(preview_position_)) {
                     std::cout << "SUCCESS: Turret placed at: " 
                               << preview_position_.x << ", " 
                               << preview_position_.y << ", " 
@@ -352,8 +467,13 @@ void Game::Update() {
                     // Optionally exit placement mode after placing
                     // turret_placement_mode_ = false;
                     // turret_preview_->Hide();
+                    } else {
+                        std::cout << "FAILED: TurretManager rejected placement" << std::endl;
+                        // refund if failed
+                        wave_manager_->AddCurrency(turret_cost_);
+                    }
                 } else {
-                    std::cout << "FAILED: TurretManager rejected placement" << std::endl;
+                    std::cout << "Not enough currency to place turret (cost " << turret_cost_ << ")" << std::endl;
                 }
             } else {
                 std::cout << "Cannot place turret at this location (preview not valid)" << std::endl;
@@ -364,12 +484,14 @@ void Game::Update() {
     left_button_was_pressed = left_button_is_pressed;
     
     // Update wave manager (контролирует спавн врагов)
-    wave_manager_->Update(Time::GetDeltaTime());
+    if (state_ == GameState::Playing && !paused_) wave_manager_->Update(Time::GetDeltaTime());
     
     // Update game systems
-    enemy_spawner_->Update(Time::GetDeltaTime());
-    turret_manager_->Update(Time::GetDeltaTime(), enemy_spawner_->GetEnemies());
-    projectile_manager_->Update(Time::GetDeltaTime(), enemy_spawner_->GetEnemies());
+    if (state_ == GameState::Playing && !paused_) {
+        enemy_spawner_->Update(Time::GetDeltaTime());
+        turret_manager_->Update(Time::GetDeltaTime(), enemy_spawner_->GetEnemies());
+        projectile_manager_->Update(Time::GetDeltaTime(), enemy_spawner_->GetEnemies());
+    }
 }
 
 void Game::Render() {
@@ -456,6 +578,15 @@ void Game::Render() {
     
     // Render turret preview
     if (turret_preview_ && turret_preview_->IsVisible()) {
+        // DEBUG: Print preview info occasionally
+        static int preview_render_counter = 0;
+        if (++preview_render_counter % 60 == 0) {
+            std::cout << "DEBUG PREVIEW RENDER: pos=(" << preview_position_.x << "," 
+                      << preview_position_.y << "," << preview_position_.z << "), valid=" 
+                      << preview_valid_ << ", cam_pos=(" << camera_->GetPosition().x << "," 
+                      << camera_->GetPosition().y << "," << camera_->GetPosition().z << ")" << std::endl;
+        }
+        
         // Set up model matrix for preview position
         glm::mat4 preview_model = glm::translate(glm::mat4(1.0f), preview_position_);
         shader_->SetUniform("model", preview_model);
@@ -472,7 +603,32 @@ void Game::Render() {
     
     // Render UI (last, on top of everything)
     if (ui_manager_ && wave_manager_) {
-        ui_manager_->Render(wave_manager_.get(), 1280, 720);
+        // Use actual viewport size
+        int w = renderer_ ? renderer_->GetViewportWidth() : 1280;
+        int h = renderer_ ? renderer_->GetViewportHeight() : 720;
+        if (state_ == GameState::MainMenu) {
+            ui_manager_->RenderMainMenu(w, h, main_menu_index_);
+        } else if (state_ == GameState::Options) {
+            ui_manager_->RenderOptionsMenu(w, h, options_selected_index_);
+        } else {
+            ui_manager_->Render(wave_manager_.get(), w, h);
+        }
+        if (paused_ && state_ == GameState::Playing) {
+            ui_manager_->RenderPausedOverlay(w, h);
+        }
+
+        // Tooltip near cursor in placement mode: show turret cost with color by affordability
+        if (state_ == GameState::Playing && turret_placement_mode_) {
+            int money = wave_manager_->GetCurrency();
+            const int turret_cost = turret_cost_;
+            glm::vec3 tooltip_color = (money >= turret_cost) ? glm::vec3(0.0f, 1.0f, 0.0f)
+                                                             : glm::vec3(1.0f, 0.0f, 0.0f);
+            glm::vec2 mouse = input_->GetMousePosition();
+            // Курсор координаты уже в пикселях окна (0..width, 0..height)
+            float tip_x = mouse.x + 16.0f;
+            float tip_y = mouse.y + 24.0f;
+            ui_manager_->RenderTooltip("COST: " + std::to_string(turret_cost), tip_x, tip_y, 0.7f, tooltip_color);
+        }
     }
 }
 

@@ -53,4 +53,16 @@ private:
     bool turret_placement_mode_;
     glm::vec3 preview_position_;
     bool preview_valid_;
+
+    // Economy
+    int turret_cost_ = 20;
+
+    // Pause state
+    bool paused_ = false;
+
+    // Game state / menus
+    enum class GameState { MainMenu, Options, Playing, Paused };
+    GameState state_ = GameState::MainMenu;
+    int main_menu_index_ = 0;
+    int options_selected_index_ = 1; // default 1920x1080
 };

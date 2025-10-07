@@ -7,7 +7,8 @@ Camera::Camera()
     , up_(0.0f, 1.0f, 0.0f)
     , zoom_(25.0f)
     , rotation_x_(0.0f)
-    , rotation_y_(0.0f) {
+    , rotation_y_(0.0f)
+    , aspect_ratio_(16.0f / 9.0f) {
     UpdateViewMatrix();
     UpdateProjectionMatrix();
 }
@@ -16,7 +17,8 @@ Camera::Camera(const glm::vec3& position, const glm::vec3& target)
     : position_(position)
     , target_(target)
     , up_(0.0f, 1.0f, 0.0f)
-    , zoom_(glm::length(position - target)) {
+    , zoom_(glm::length(position - target))
+    , aspect_ratio_(16.0f / 9.0f) {
     UpdateViewMatrix();
     UpdateProjectionMatrix();
 }
@@ -86,12 +88,14 @@ void Camera::UpdateViewMatrix() {
 }
 
 void Camera::UpdateProjectionMatrix() {
-    // For now, use a fixed aspect ratio and FOV
-    // TODO: Get aspect ratio from window
-    float aspect = 16.0f / 9.0f; // Default aspect ratio
+    float aspect = aspect_ratio_;
     float fov = 45.0f;
     float near_plane = 0.1f;
     float far_plane = 1000.0f;
     
     projection_matrix_ = glm::perspective(glm::radians(fov), aspect, near_plane, far_plane);
+}
+
+void Camera::SetAspect(float aspect) {
+    aspect_ratio_ = aspect;
 }

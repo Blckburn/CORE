@@ -35,6 +35,9 @@ bool Renderer::Initialize(Window* window) {
     
     // Set viewport
     glViewport(0, 0, window_->GetWidth(), window_->GetHeight());
+    if (camera_) {
+        camera_->SetAspect(window_->GetAspectRatio());
+    }
     
     std::cout << "Renderer initialized successfully!" << std::endl;
     return true;
@@ -69,4 +72,27 @@ void Renderer::Clear() {
 
 void Renderer::SetCamera(std::shared_ptr<Camera> camera) {
     camera_ = camera;
+}
+
+int Renderer::GetViewportWidth() const { 
+    if (!window_ || !window_->GetGLFWWindow()) return 1280;
+    int width, height;
+    glfwGetWindowSize(window_->GetGLFWWindow(), &width, &height);
+    return width;
+}
+
+int Renderer::GetViewportHeight() const { 
+    if (!window_ || !window_->GetGLFWWindow()) return 720;
+    int width, height;
+    glfwGetWindowSize(window_->GetGLFWWindow(), &width, &height);
+    return height;
+}
+
+void Renderer::SetWindowSize(int width, int height) {
+    if (!window_) return;
+    GLFWwindow* w = window_->GetGLFWWindow();
+    if (!w) return;
+    glfwSetWindowSize(w, width, height);
+    glViewport(0, 0, width, height);
+    if (camera_) camera_->SetAspect(static_cast<float>(width) / static_cast<float>(height));
 }

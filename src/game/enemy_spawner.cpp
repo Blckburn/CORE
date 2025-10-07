@@ -75,6 +75,14 @@ void EnemySpawner::SpawnEnemy() {
     // Create new enemy
     auto enemy = std::make_unique<Enemy>();
     if (enemy->Initialize(spawn_pos)) {
+        // 30% chance to be a fast enemy variant
+        static std::uniform_real_distribution<float> chance_dist(0.0f, 1.0f);
+        float roll = chance_dist(gen_);
+        if (roll < 0.3f) {
+            enemy->SetSpeed(6.0f);      // faster
+            enemy->SetHealth(60.0f);    // less HP
+            enemy->SetColor(glm::vec3(1.0f, 1.0f, 0.0f)); // yellow tint
+        }
         enemies_.push_back(std::move(enemy));
         std::cout << "Spawned enemy #" << enemies_.size() << " at distance " 
                   << glm::length(spawn_pos) << " from center" << std::endl;

@@ -28,6 +28,7 @@ public:
     
     // Mouse input
     glm::vec2 GetMousePosition() const;
+    glm::vec2 GetMousePositionFramebuffer() const;
     glm::vec2 GetMouseDelta() const;
     bool IsMouseButtonPressed(int button) const;
     bool IsMouseButtonJustPressed(int button) const;
@@ -42,6 +43,7 @@ public:
 private:
     GLFWwindow* window_;
     glm::vec2 mouse_position_;
+    glm::vec2 mouse_position_fb_;
     glm::vec2 mouse_delta_;
     glm::vec2 last_mouse_position_;
     float scroll_delta_;

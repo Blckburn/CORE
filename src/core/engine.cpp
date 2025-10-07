@@ -54,12 +54,15 @@ void Engine::Run() {
     
     std::cout << "Starting main game loop..." << std::endl;
     
-    while (is_running_ && window_->ShouldClose()) {
+    while (is_running_ && !window_->ShouldClose()) {
+        // Update input state BEFORE polling new events
+        input_->Update();
+        
+        // Poll events to get fresh input
+        window_->PollEvents();
+        
         // Update time
         Time::Update();
-        
-        // Update input
-        input_->Update();
         
         // Update game logic
         game_->Update();
@@ -69,9 +72,8 @@ void Engine::Run() {
         game_->Render();
         renderer_->EndFrame();
         
-        // Swap buffers and poll events
+        // Swap buffers
         window_->SwapBuffers();
-        window_->PollEvents();
     }
     
     std::cout << "Main game loop ended." << std::endl;

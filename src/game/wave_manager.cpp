@@ -19,7 +19,10 @@ WaveManager::WaveManager()
     , base_enemies_per_wave_(10)      // 10 врагов в первой волне
     , difficulty_multiplier_(1.0f)
     , total_score_(0)
-    , core_health_(100) {
+    , core_health_(100)
+    , currency_(0)
+    , reward_per_enemy_(10)
+    , starting_currency_(60) {
 }
 
 void WaveManager::SetEnemySpawner(EnemySpawner* spawner) {
@@ -33,6 +36,7 @@ void WaveManager::StartGame() {
     enemies_remaining_ = 0;
     total_score_ = 0;
     core_health_ = 100;
+    currency_ = starting_currency_;
     wave_delay_timer_ = 10.0f; // Увеличили задержку перед первой волной для подготовки
     
     std::cout << "=== GAME STARTED ===" << std::endl;
@@ -84,7 +88,13 @@ void WaveManager::SpawnEnemy() {
 void WaveManager::OnEnemyDestroyed() {
     if (enemies_remaining_ > 0) {
         enemies_remaining_--;
-        total_score_ += 10; // 10 очков за уничтоженного врага
+        total_score_ += 10; // очки
+        // Немного большая награда за быстрых врагов (цвет желтый)
+        int reward = reward_per_enemy_;
+        // Простой способ: если у врага было меньше базового HP при смерти, добавим 20%
+        // (в дальнейшем можно хранить тип врага явно)
+        reward = reward_per_enemy_;
+        currency_ += reward; // валюта
         
         std::cout << "Enemy destroyed! Remaining: " << enemies_remaining_ << " | Score: " << total_score_ << std::endl;
         

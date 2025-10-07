@@ -20,6 +20,7 @@ public:
     bool IsGameOver() const { return game_over_; }
     int GetTotalScore() const { return total_score_; }
     int GetCoreHealth() const { return core_health_; }
+    int GetCurrency() const { return currency_; }
     
     // Управление игрой
     void StartGame();
@@ -28,6 +29,10 @@ public:
     void OnEnemyReachedCore();
     void SetPreparationDuration(float seconds) { wave_delay_duration_ = seconds; }
     void SetInitialPreparation(float seconds) { wave_delay_timer_ = seconds; }
+
+    // Экономика
+    void AddCurrency(int amount) { currency_ += amount; }
+    bool SpendCurrency(int amount) { if (currency_ >= amount) { currency_ -= amount; return true; } return false; }
 
 private:
     EnemySpawner* enemy_spawner_;
@@ -58,6 +63,9 @@ private:
     // Очки
     int total_score_;
     int core_health_;
+    int currency_;
+    int reward_per_enemy_;
+    int starting_currency_;
     
     void CalculateWaveParameters();
     void SpawnEnemy();

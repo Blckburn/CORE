@@ -62,6 +62,10 @@ glm::vec2 InputManager::GetMousePosition() const {
     return mouse_position_;
 }
 
+glm::vec2 InputManager::GetMousePositionFramebuffer() const {
+    return mouse_position_fb_;
+}
+
 glm::vec2 InputManager::GetMouseDelta() const {
     return mouse_delta_;
 }
@@ -73,7 +77,11 @@ bool InputManager::IsMouseButtonPressed(int button) const {
 
 bool InputManager::IsMouseButtonJustPressed(int button) const {
     if (button < 0 || button >= GLFW_MOUSE_BUTTON_LAST) return false;
-    return mouse_buttons_[button] && !mouse_buttons_prev_[button];
+    bool result = mouse_buttons_[button] && !mouse_buttons_prev_[button];
+    if (result) {
+        std::cout << "DEBUG: Mouse button " << button << " just pressed! (current=" << mouse_buttons_[button] << ", prev=" << mouse_buttons_prev_[button] << ")" << std::endl;
+    }
+    return result;
 }
 
 float InputManager::GetScrollDelta() const {
@@ -115,6 +123,13 @@ void InputManager::MouseCallback(GLFWwindow* window, double x, double y) {
     if (!input) return;
     
     input->mouse_position_ = glm::vec2(static_cast<float>(x), static_cast<float>(y));
+    // Map to framebuffer coordinates (accounts for DPI scaling on Windows)
+    int win_w = 0, win_h = 0, fb_w = 0, fb_h = 0;
+    glfwGetWindowSize(window, &win_w, &win_h);
+    glfwGetFramebufferSize(window, &fb_w, &fb_h);
+    float scale_x = (win_w > 0) ? static_cast<float>(fb_w) / static_cast<float>(win_w) : 1.0f;
+    float scale_y = (win_h > 0) ? static_cast<float>(fb_h) / static_cast<float>(win_h) : 1.0f;
+    input->mouse_position_fb_ = glm::vec2(static_cast<float>(x) * scale_x, static_cast<float>(y) * scale_y);
     
     // Debug mouse position (only occasionally)
     static int counter = 0;
