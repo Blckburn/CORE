@@ -191,8 +191,8 @@ void Game::Update() {
     static float camera_rotate_hold_time = 0.0f;
     if (input_->IsMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT)) {
         camera_rotate_hold_time += Time::GetDeltaTime();
-        // Only rotate camera if button held for more than 0.2 seconds
-        if (camera_rotate_hold_time > 0.2f) {
+        // Only rotate camera if button held for more than 0.05 seconds
+        if (camera_rotate_hold_time > 0.05f) {
             glm::vec2 mouse_delta = input_->GetMouseDelta();
             if (mouse_delta.x != 0.0f || mouse_delta.y != 0.0f) {
                 camera_->Rotate(mouse_delta.x, mouse_delta.y);
@@ -577,8 +577,8 @@ void Game::Update() {
             right_button_hold_time += Time::GetDeltaTime();
         }
         
-        // On release: if it was a quick click (< 0.2s), select turret
-        if (!right_button_is_pressed && right_button_was_pressed && right_button_hold_time < 0.2f) {
+        // On release: if it was a quick click (< 0.15s), select turret
+        if (!right_button_is_pressed && right_button_was_pressed && right_button_hold_time < 0.15f) {
             // Quick right click - try to select turret
             glm::vec2 mouse_pos = input_->GetMousePositionFramebuffer();
             int viewport_w = renderer_ ? renderer_->GetViewportWidth() : 1280;
