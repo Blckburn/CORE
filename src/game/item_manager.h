@@ -26,7 +26,11 @@ public:
     // Getters
     const std::vector<std::unique_ptr<Item>>& GetDroppedItems() const { return dropped_items_; }
     const std::vector<std::unique_ptr<Item>>& GetInventory() const { return inventory_; }
+    std::vector<std::unique_ptr<Item>>& GetInventoryMutable() { return inventory_; }
     int GetInventoryCount() const { return static_cast<int>(inventory_.size()); }
+    
+    // Remove item from inventory by index
+    void RemoveFromInventory(int index);
     
     // Clean up picked items
     void CleanupPickedItems();

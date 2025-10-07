@@ -308,7 +308,7 @@ void UIManager::RenderTooltip(const std::string& text, float x, float y, float s
     if (depth_enabled) glEnable(GL_DEPTH_TEST);
 }
 
-void UIManager::RenderTurretMenu(class Turret* turret, class Camera* camera, class InputManager* input, class ItemManager* item_manager, int window_width, int window_height, bool& sell_clicked, int& slot_clicked, int& inventory_clicked) {
+void UIManager::RenderTurretMenu(class Turret* turret, class Camera* camera, class InputManager* input, class ItemManager* item_manager, int selected_inventory_index, int window_width, int window_height, bool& sell_clicked, int& slot_clicked, int& inventory_clicked) {
     if (!font_ || !text_shader_ || !camera || !input || !turret || !item_manager) return;
     
     sell_clicked = false;
@@ -354,9 +354,9 @@ void UIManager::RenderTurretMenu(class Turret* turret, class Camera* camera, cla
     
     const auto& slots = turret->GetItemSlots();
     for (int i = 0; i < 3; ++i) {
-        float slot_x = menu_x + 10.0f + i * 90.0f;
+        float slot_x = menu_x + 10.0f + i * 190.0f;
         float slot_y = y_offset;
-        float slot_w = 80.0f;
+        float slot_w = 180.0f;
         float slot_h = 20.0f;
         
         bool mouse_over_slot = (mouse.x >= slot_x && mouse.x <= slot_x + slot_w &&
@@ -365,12 +365,15 @@ void UIManager::RenderTurretMenu(class Turret* turret, class Camera* camera, cla
         glm::vec3 slot_color = mouse_over_slot ? glm::vec3(1.0f, 1.0f, 0.0f) : glm::vec3(0.5f, 0.5f, 0.5f);
         
         if (slots[i]) {
-            // Show equipped item
-            slot_color = slots[i]->GetColor();
-            font_->RenderText("SLOT" + std::to_string(i+1), slot_x, slot_y, 0.6f, slot_color);
+            // Show equipped item name
+            slot_color = mouse_over_slot ? slots[i]->GetColor() * 1.5f : slots[i]->GetColor();
+            std::string item_name = slots[i]->GetName();
+            // Shorten if too long
+            if (item_name.length() > 20) item_name = item_name.substr(0, 17) + "...";
+            font_->RenderText(item_name, slot_x, slot_y, 0.5f, slot_color);
         } else {
-            // Empty slot
-            font_->RenderText("[EMPTY]", slot_x, slot_y, 0.6f, slot_color);
+            // Empty slot - clickable
+            font_->RenderText("[SLOT " + std::to_string(i+1) + " - EMPTY]", slot_x, slot_y, 0.5f, slot_color);
         }
         
         // Click detection
@@ -386,24 +389,40 @@ void UIManager::RenderTurretMenu(class Turret* turret, class Camera* camera, cla
     y_offset += 25.0f;
     
     const auto& inventory = item_manager->GetInventory();
-    int items_shown = std::min(5, static_cast<int>(inventory.size()));
+    int items_shown = std::min(3, static_cast<int>(inventory.size())); // Show max 3 items
     for (int i = 0; i < items_shown; ++i) {
-        float inv_x = menu_x + 10.0f + i * 90.0f;
+        float inv_x = menu_x + 10.0f + i * 190.0f;
         float inv_y = y_offset;
-        float inv_w = 80.0f;
+        float inv_w = 180.0f;
         float inv_h = 20.0f;
         
         bool mouse_over_inv = (mouse.x >= inv_x && mouse.x <= inv_x + inv_w &&
                                mouse.y >= inv_y && mouse.y <= inv_y + inv_h);
+        bool is_selected = (i == selected_inventory_index);
         
-        glm::vec3 inv_color = mouse_over_inv ? inventory[i]->GetColor() * 1.5f : inventory[i]->GetColor();
-        font_->RenderText("ITEM" + std::to_string(i+1), inv_x, inv_y, 0.6f, inv_color);
+        glm::vec3 inv_color;
+        if (is_selected) {
+            inv_color = glm::vec3(1.0f, 1.0f, 0.0f); // Yellow when selected
+        } else if (mouse_over_inv) {
+            inv_color = inventory[i]->GetColor() * 1.5f; // Bright when hovered
+        } else {
+            inv_color = inventory[i]->GetColor(); // Normal
+        }
+        
+        std::string item_name = inventory[i]->GetName();
+        // Shorten if too long
+        if (item_name.length() > 20) item_name = item_name.substr(0, 17) + "...";
+        font_->RenderText(item_name, inv_x, inv_y, 0.5f, inv_color);
         
         // Click detection
         if (mouse_over_inv && input->IsMouseButtonJustPressed(0)) {
             inventory_clicked = i;
         }
     }
+    
+    // Show hint
+    text_shader_->SetUniform("text_color", glm::vec3(0.7f, 0.7f, 0.7f));
+    font_->RenderText("Click item then slot to equip. ESC to close.", menu_x + 10.0f, y_offset + 30.0f, 0.5f, glm::vec3(0.7f, 0.7f, 0.7f));
     y_offset += 30.0f;
     
     // SELL button
@@ -421,6 +440,62 @@ void UIManager::RenderTurretMenu(class Turret* turret, class Camera* camera, cla
     if (mouse_over_sell && input->IsMouseButtonJustPressed(0)) {
         sell_clicked = true;
     }
+    
+    if (depth_enabled) glEnable(GL_DEPTH_TEST);
+}
+
+void UIManager::RenderInventoryScreen(class ItemManager* item_manager, int window_width, int window_height) {
+    if (!font_ || !text_shader_ || !item_manager) return;
+    
+    viewport_width_ = window_width;
+    viewport_height_ = window_height;
+    
+    GLboolean depth_enabled = glIsEnabled(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
+    
+    // Dim background
+    RenderDimBackground(window_width, window_height, 0.5f);
+    
+    text_shader_->Use();
+    glm::mat4 projection = glm::ortho(0.0f, (float)viewport_width_, (float)viewport_height_, 0.0f);
+    text_shader_->SetUniform("projection", projection);
+    text_shader_->SetUniform("text", 0);
+    
+    float cx = window_width / 2.0f - 300.0f;
+    float cy = window_height / 2.0f - 200.0f;
+    
+    // Title
+    text_shader_->SetUniform("text_color", glm::vec3(0.0f, 1.0f, 1.0f));
+    font_->RenderText("INVENTORY", cx, cy, 1.2f, glm::vec3(0.0f, 1.0f, 1.0f));
+    cy += 40.0f;
+    
+    // Show all items in inventory
+    const auto& inventory = item_manager->GetInventory();
+    if (inventory.empty()) {
+        text_shader_->SetUniform("text_color", glm::vec3(0.7f, 0.7f, 0.7f));
+        font_->RenderText("No items in inventory", cx, cy, 0.8f, glm::vec3(0.7f, 0.7f, 0.7f));
+    } else {
+        for (size_t i = 0; i < inventory.size(); ++i) {
+            const auto& item = inventory[i];
+            glm::vec3 color = item->GetColor();
+            text_shader_->SetUniform("text_color", color);
+            
+            std::string display = std::to_string(i+1) + ". " + item->GetName();
+            font_->RenderText(display, cx, cy, 0.7f, color);
+            cy += 25.0f;
+            
+            // Show description
+            std::string desc = item->GetDescription();
+            text_shader_->SetUniform("text_color", glm::vec3(0.8f, 0.8f, 0.8f));
+            font_->RenderText("   " + desc.substr(0, desc.find('\n')), cx, cy, 0.5f, glm::vec3(0.8f, 0.8f, 0.8f));
+            cy += 20.0f;
+        }
+    }
+    
+    // Hint
+    cy = window_height / 2.0f + 150.0f;
+    text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 0.0f));
+    font_->RenderText("Press I to close, RMB on turret to equip items", cx - 100.0f, cy, 0.6f, glm::vec3(1.0f, 1.0f, 0.0f));
     
     if (depth_enabled) glEnable(GL_DEPTH_TEST);
 }

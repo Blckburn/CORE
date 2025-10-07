@@ -58,6 +58,13 @@ Item* ItemManager::GetItemAtPosition(const glm::vec3& position, float radius) {
     return nullptr;
 }
 
+void ItemManager::RemoveFromInventory(int index) {
+    if (index >= 0 && index < static_cast<int>(inventory_.size())) {
+        inventory_.erase(inventory_.begin() + index);
+        std::cout << "Removed item from inventory index " << index << std::endl;
+    }
+}
+
 void ItemManager::CleanupPickedItems() {
     // Remove picked up items from dropped list
     dropped_items_.erase(

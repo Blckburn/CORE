@@ -17,7 +17,8 @@ public:
     void RenderWithTurrets(WaveManager* wave_manager, class TurretManager* turret_manager, int window_width, int window_height);
     void RenderPausedOverlay(int window_width, int window_height);
     void RenderTooltip(const std::string& text, float x, float y, float scale, const glm::vec3& color);
-    void RenderTurretMenu(class Turret* turret, class Camera* camera, class InputManager* input, class ItemManager* item_manager, int window_width, int window_height, bool& sell_clicked, int& slot_clicked, int& inventory_clicked);
+    void RenderTurretMenu(class Turret* turret, class Camera* camera, class InputManager* input, class ItemManager* item_manager, int selected_inventory_index, int window_width, int window_height, bool& sell_clicked, int& slot_clicked, int& inventory_clicked);
+    void RenderInventoryScreen(class ItemManager* item_manager, int window_width, int window_height);
     // Menus
     void RenderMainMenu(int window_width, int window_height, int selected_index);
     void RenderOptionsMenu(int window_width, int window_height, int selected_index);

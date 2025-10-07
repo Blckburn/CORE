@@ -410,6 +410,12 @@ void Game::Update() {
         std::cout << (paused_ ? "Game paused" : "Game resumed") << std::endl;
     }
     p_key_was_pressed = p_key_is_pressed;
+    
+    // Toggle inventory with I key
+    if (state_ == GameState::Playing && input_->IsKeyJustPressed(73)) { // GLFW_KEY_I
+        inventory_open_ = !inventory_open_;
+        std::cout << (inventory_open_ ? "Inventory opened" : "Inventory closed") << std::endl;
+    }
 
     // Hold R for 2 seconds to restart the game
     static float r_hold_time = 0.0f;
@@ -695,8 +701,9 @@ void Game::Update() {
     // Update wave manager (контролирует спавн врагов)
     if (state_ == GameState::Playing && !paused_) wave_manager_->Update(Time::GetDeltaTime());
     
-    // Update game systems
-    if (state_ == GameState::Playing && !paused_) {
+    // Update game systems (pause when turret menu or inventory is open)
+    bool game_paused = paused_ || turret_menu_open_ || inventory_open_;
+    if (state_ == GameState::Playing && !game_paused) {
         enemy_spawner_->Update(Time::GetDeltaTime());
         turret_manager_->Update(Time::GetDeltaTime(), enemy_spawner_->GetEnemies());
         projectile_manager_->Update(Time::GetDeltaTime(), enemy_spawner_->GetEnemies());
@@ -855,6 +862,11 @@ void Game::Render() {
         if (paused_ && state_ == GameState::Playing) {
             ui_manager_->RenderPausedOverlay(w, h);
         }
+        
+        // Inventory screen (I key)
+        if (state_ == GameState::Playing && inventory_open_) {
+            ui_manager_->RenderInventoryScreen(item_manager_.get(), w, h);
+        }
 
         // Tooltip near cursor in placement mode: show turret cost with color by affordability
         if (state_ == GameState::Playing && turret_placement_mode_) {
@@ -875,29 +887,38 @@ void Game::Render() {
             int slot_clicked = -1;
             int inventory_clicked = -1;
             
-            ui_manager_->RenderTurretMenu(selected_turret_, camera_.get(), input_, item_manager_.get(), w, h, sell_clicked, slot_clicked, inventory_clicked);
+            ui_manager_->RenderTurretMenu(selected_turret_, camera_.get(), input_, item_manager_.get(), selected_inventory_index_, w, h, sell_clicked, slot_clicked, inventory_clicked);
             
-            // Handle slot + inventory click (equip item)
-            if (slot_clicked >= 0 && inventory_clicked >= 0) {
-                const auto& inventory = item_manager_->GetInventory();
-                if (inventory_clicked < static_cast<int>(inventory.size())) {
-                    Item* item = inventory[inventory_clicked].get();
-                    selected_turret_->EquipItem(item, slot_clicked);
-                    std::cout << "Equipped item from inventory slot " << inventory_clicked << " to turret slot " << slot_clicked << std::endl;
+            // Close menu on ESC
+            if (input_->IsKeyJustPressed(256)) { // ESC
+                turret_menu_open_ = false;
+                selected_turret_ = nullptr;
+                selected_inventory_index_ = -1;
+                std::cout << "Turret menu closed" << std::endl;
+            }
+            
+            // Handle equipping items: first select item, then click slot
+            if (inventory_clicked >= 0) {
+                // Select/toggle inventory item
+                if (selected_inventory_index_ == inventory_clicked) {
+                    selected_inventory_index_ = -1; // Deselect
+                    std::cout << "Deselected inventory item" << std::endl;
+                } else {
+                    selected_inventory_index_ = inventory_clicked;
+                    std::cout << "Selected inventory item " << inventory_clicked << std::endl;
                 }
-            } else if (selected_inventory_index_ >= 0 && slot_clicked >= 0) {
-                // Previously selected inventory item + new slot click
-                const auto& inventory = item_manager_->GetInventory();
+            } else if (slot_clicked >= 0 && selected_inventory_index_ >= 0) {
+                // Slot clicked with selected inventory item - equip it
+                auto& inventory = item_manager_->GetInventoryMutable();
                 if (selected_inventory_index_ < static_cast<int>(inventory.size())) {
                     Item* item = inventory[selected_inventory_index_].get();
-                    selected_turret_->EquipItem(item, slot_clicked);
-                    std::cout << "Equipped item from inventory slot " << selected_inventory_index_ << " to turret slot " << slot_clicked << std::endl;
-                    selected_inventory_index_ = -1;
+                    if (selected_turret_->EquipItem(item, slot_clicked)) {
+                        std::cout << "Equipped " << item->GetName() << " to slot " << slot_clicked << std::endl;
+                        // Remove item from inventory after equipping
+                        item_manager_->RemoveFromInventory(selected_inventory_index_);
+                        selected_inventory_index_ = -1;
+                    }
                 }
-            } else if (inventory_clicked >= 0) {
-                // Select inventory item for next slot click
-                selected_inventory_index_ = inventory_clicked;
-                std::cout << "Selected inventory item " << inventory_clicked << std::endl;
             }
             
             // Handle sell click

@@ -80,4 +80,5 @@ private:
     int main_menu_index_ = 0;
     int options_selected_index_ = 1; // default 1920x1080
     int game_over_menu_index_ = 0; // 0 = Restart, 1 = Main Menu
+    bool inventory_open_ = false; // I key toggles inventory
 };
