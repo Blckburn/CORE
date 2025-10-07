@@ -38,7 +38,11 @@ public:
     // Clear all items
     void ClearAll();
     
+    // Remove oldest dropped items if too many
+    void CleanupOldDrops(int max_drops = 20);
+    
 private:
+    static const int MAX_DROPPED_ITEMS = 20; // Maximum items on ground
     std::vector<std::unique_ptr<Item>> dropped_items_; // Items in the world
     std::vector<std::unique_ptr<Item>> inventory_;     // Items in player inventory
     

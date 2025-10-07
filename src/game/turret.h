@@ -64,6 +64,7 @@ public:
     // Item management
     bool EquipItem(Item* item, int slot_index); // Equip item to slot (0-2)
     void RecalculateStats(); // Recalculate stats based on equipped items
+    int GetEquippedItemCount() const; // Get number of equipped items
 
 private:
     glm::vec3 position_;        // Turret position

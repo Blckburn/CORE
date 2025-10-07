@@ -11,7 +11,8 @@ Item::Item()
     , secondary_bonus_(0.0f)
     , legendary_effect_(LegendaryEffect::None)
     , color_(1.0f)
-    , active_(false) {
+    , active_(false)
+    , stack_count_(1) {
 }
 
 Item::~Item() {
@@ -184,5 +185,17 @@ std::string Item::GetDescription() const {
     }
     
     return desc;
+}
+
+bool Item::IsSameAs(const Item* other) const {
+    if (!other) return false;
+    
+    // Items are the same if they have identical stats
+    return rarity_ == other->rarity_ &&
+           primary_stat_ == other->primary_stat_ &&
+           secondary_stat_ == other->secondary_stat_ &&
+           primary_bonus_ == other->primary_bonus_ &&
+           secondary_bonus_ == other->secondary_bonus_ &&
+           legendary_effect_ == other->legendary_effect_;
 }
 

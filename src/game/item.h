@@ -55,6 +55,15 @@ public:
     void SetActive(bool active) { active_ = active; }
     void Pickup() { active_ = false; } // Деактивировать при подборе
     
+    // Stack management
+    int GetStackCount() const { return stack_count_; }
+    void SetStackCount(int count) { stack_count_ = count; }
+    void AddToStack(int amount = 1) { stack_count_ += amount; }
+    void RemoveFromStack(int amount = 1) { stack_count_ = std::max(0, stack_count_ - amount); }
+    
+    // Check if two items are the same (for stacking)
+    bool IsSameAs(const Item* other) const;
+    
 private:
     glm::vec3 position_;          // Позиция в мире (где выпал)
     ItemRarity rarity_;           // Редкость предмета
@@ -65,9 +74,11 @@ private:
     LegendaryEffect legendary_effect_; // Спец эффект для легендарок
     glm::vec3 color_;             // Цвет предмета по редкости
     bool active_;                 // Активен ли предмет в мире
+    int stack_count_;             // Количество предметов в стаке (для инвентаря)
     
     // Generate random stats based on rarity
     void GenerateStats();
     void SetColorByRarity();
 };
+
 

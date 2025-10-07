@@ -24,6 +24,9 @@ void ItemManager::DropItem(const glm::vec3& position) {
     auto item = std::make_unique<Item>();
     if (item->Initialize(position, rarity)) {
         dropped_items_.push_back(std::move(item));
+        
+        // Auto-cleanup if too many items on ground
+        CleanupOldDrops(MAX_DROPPED_ITEMS);
     }
 }
 
@@ -33,14 +36,27 @@ Item* ItemManager::PickupItemAtPosition(const glm::vec3& position, float radius)
         
         float distance = glm::length(item->GetPosition() - position);
         if (distance <= radius) {
-            // Move item to inventory
             item->Pickup();
-            inventory_.push_back(std::move(item));
             
-            std::cout << "Item picked up! Inventory: " << inventory_.size() << std::endl;
+            // Check if we already have the same item in inventory (for stacking)
+            Item* found_stack = nullptr;
+            for (auto& inv_item : inventory_) {
+                if (inv_item && inv_item->IsSameAs(item.get())) {
+                    inv_item->AddToStack(1);
+                    found_stack = inv_item.get();
+                    std::cout << "Item stacked! Stack count: " << inv_item->GetStackCount() << std::endl;
+                    break;
+                }
+            }
             
-            // Return pointer to item in inventory
-            return inventory_.back().get();
+            // If not found in inventory, add as new item
+            if (!found_stack) {
+                inventory_.push_back(std::move(item));
+                found_stack = inventory_.back().get();
+                std::cout << "Item picked up! Inventory: " << inventory_.size() << std::endl;
+            }
+            
+            return found_stack;
         }
     }
     return nullptr;
@@ -60,8 +76,16 @@ Item* ItemManager::GetItemAtPosition(const glm::vec3& position, float radius) {
 
 void ItemManager::RemoveFromInventory(int index) {
     if (index >= 0 && index < static_cast<int>(inventory_.size())) {
-        inventory_.erase(inventory_.begin() + index);
-        std::cout << "Removed item from inventory index " << index << std::endl;
+        auto& item = inventory_[index];
+        if (item->GetStackCount() > 1) {
+            // Reduce stack count
+            item->RemoveFromStack(1);
+            std::cout << "Removed 1 from stack, remaining: " << item->GetStackCount() << std::endl;
+        } else {
+            // Remove item completely if stack is 1
+            inventory_.erase(inventory_.begin() + index);
+            std::cout << "Removed item from inventory index " << index << std::endl;
+        }
     }
 }
 
@@ -102,6 +126,21 @@ ItemRarity ItemManager::GenerateRandomRarity() {
         return ItemRarity::Uncommon;
     } else {
         return ItemRarity::Common;
+    }
+}
+
+void ItemManager::CleanupOldDrops(int max_drops) {
+    // Remove oldest items if too many on ground
+    while (static_cast<int>(dropped_items_.size()) > max_drops) {
+        // Find and remove first active item (oldest)
+        for (auto it = dropped_items_.begin(); it != dropped_items_.end(); ++it) {
+            if (*it && (*it)->IsActive()) {
+                std::cout << "Auto-removing old dropped item (too many on ground)" << std::endl;
+                dropped_items_.erase(it);
+                break;
+            }
+        }
+        break; // Remove one at a time
     }
 }
 

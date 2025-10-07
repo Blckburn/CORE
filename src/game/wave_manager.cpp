@@ -115,7 +115,7 @@ void WaveManager::OnEnemyDestroyed(const glm::vec3& enemy_position) {
             static std::mt19937 gen(rd());
             static std::uniform_real_distribution<float> drop_chance(0.0f, 1.0f);
             
-            if (drop_chance(gen) < 0.1f) { // 10% chance
+            if (drop_chance(gen) < 0.05f) { // 5% chance (было 10%)
                 // Поднять предмет немного вверх чтобы было видно
                 glm::vec3 drop_pos = enemy_position + glm::vec3(0.0f, 2.0f, 0.0f);
                 item_manager_->DropItem(drop_pos);

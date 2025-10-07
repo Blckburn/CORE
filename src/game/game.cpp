@@ -923,9 +923,9 @@ void Game::Render() {
                 std::cout << "Turret menu closed (game resumed)" << std::endl;
             }
             
-            // Handle equipping items: first select item, then click slot
+            // Handle equipping items: first select item from grid, then click slot
             if (inventory_clicked >= 0) {
-                // Select/toggle inventory item
+                // Grid item clicked - select/toggle it
                 if (selected_inventory_index_ == inventory_clicked) {
                     selected_inventory_index_ = -1; // Deselect
                     std::cout << "Deselected inventory item" << std::endl;
@@ -934,7 +934,7 @@ void Game::Render() {
                     std::cout << "Selected inventory item " << inventory_clicked << std::endl;
                 }
             } else if (slot_clicked >= 0 && selected_inventory_index_ >= 0) {
-                // Slot clicked with selected inventory item - equip it
+                // Slot clicked with selected item - equip it
                 auto& inventory = item_manager_->GetInventoryMutable();
                 if (selected_inventory_index_ < static_cast<int>(inventory.size())) {
                     Item* item = inventory[selected_inventory_index_].get();

@@ -137,6 +137,14 @@ void Turret::ResetFireTimer() {
     last_fire_time_ = 0.0f;
 }
 
+int Turret::GetEquippedItemCount() const {
+    int count = 0;
+    for (const auto& item : item_slots_) {
+        if (item) count++;
+    }
+    return count;
+}
+
 void Turret::UpdateRotation(float delta_time) {
     if (!current_target_) {
         // No target - rotate to default position (0 degrees)
@@ -222,48 +230,57 @@ void Turret::RecalculateStats() {
     fire_rate_ = base_fire_rate_;
     range_ = base_range_;
     
+    // Accumulate bonuses (additive, not multiplicative)
+    float damage_bonus = 0.0f;
+    float fire_rate_bonus = 0.0f;
+    float range_bonus = 0.0f;
+    
     // Apply bonuses from equipped items
     for (const auto& item : item_slots_) {
         if (!item) continue;
         
         // Apply primary bonus
-        float primary_bonus_mult = 1.0f + (item->GetPrimaryBonus() / 100.0f);
         switch (item->GetPrimaryStat()) {
             case ItemStat::Damage:
-                damage_ *= primary_bonus_mult;
+                damage_bonus += item->GetPrimaryBonus();
                 break;
             case ItemStat::FireRate:
-                fire_rate_ *= primary_bonus_mult;
+                fire_rate_bonus += item->GetPrimaryBonus();
                 break;
             case ItemStat::Range:
-                range_ *= primary_bonus_mult;
+                range_bonus += item->GetPrimaryBonus();
                 break;
             default: break;
         }
         
         // Apply secondary bonus (if exists)
         if (item->GetSecondaryBonus() > 0.0f) {
-            float secondary_bonus_mult = 1.0f + (item->GetSecondaryBonus() / 100.0f);
             switch (item->GetSecondaryStat()) {
                 case ItemStat::Damage:
-                    damage_ *= secondary_bonus_mult;
+                    damage_bonus += item->GetSecondaryBonus();
                     break;
                 case ItemStat::FireRate:
-                    fire_rate_ *= secondary_bonus_mult;
+                    fire_rate_bonus += item->GetSecondaryBonus();
                     break;
                 case ItemStat::Range:
-                    range_ *= secondary_bonus_mult;
+                    range_bonus += item->GetSecondaryBonus();
                     break;
                 default: break;
             }
         }
     }
     
+    // Apply accumulated bonuses
+    damage_ *= (1.0f + damage_bonus / 100.0f);
+    fire_rate_ *= (1.0f + fire_rate_bonus / 100.0f);
+    range_ *= (1.0f + range_bonus / 100.0f);
+    
     // Update reload time based on fire rate
     reload_time_ = 1.0f / fire_rate_;
     
     std::cout << "Turret stats recalculated: Damage=" << damage_ 
-              << ", FireRate=" << fire_rate_ 
-              << ", Range=" << range_ << std::endl;
+              << " (+" << static_cast<int>(damage_bonus) << "%), FireRate=" << fire_rate_ 
+              << " (+" << static_cast<int>(fire_rate_bonus) << "%), Range=" << range_ 
+              << " (+" << static_cast<int>(range_bonus) << "%)" << std::endl;
 }
 

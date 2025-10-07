@@ -356,9 +356,11 @@ void UIManager::RenderTurretMenu(class Turret* turret, class Camera* camera, cla
     font_->RenderText("RNG:" + std::to_string(static_cast<int>(turret->GetRange())), menu_x + 200.0f, y_offset, 0.7f, glm::vec3(1.0f));
     y_offset += 30.0f;
     
-    // Item slots (3 slots)
+    // Item slots (3 slots) - показываем сколько установлено
     text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 0.0f));
-    font_->RenderText("SLOTS:", menu_x + 10.0f, y_offset, 0.8f, glm::vec3(1.0f, 1.0f, 0.0f));
+    int equipped_count = turret->GetEquippedItemCount();
+    std::string slots_text = "SLOTS: " + std::to_string(equipped_count) + "/3";
+    font_->RenderText(slots_text, menu_x + 10.0f, y_offset, 0.8f, glm::vec3(1.0f, 1.0f, 0.0f));
     y_offset += 25.0f;
     
     const auto& slots = turret->GetItemSlots();
@@ -392,47 +394,16 @@ void UIManager::RenderTurretMenu(class Turret* turret, class Camera* camera, cla
     }
     y_offset += 30.0f;
     
-    // Inventory
-    text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 0.0f));
-    font_->RenderText("INVENTORY:", menu_x + 10.0f, y_offset, 0.8f, glm::vec3(1.0f, 1.0f, 0.0f));
-    y_offset += 25.0f;
-    
-    const auto& inventory = item_manager->GetInventory();
-    int items_shown = std::min(3, static_cast<int>(inventory.size())); // Show max 3 items
-    for (int i = 0; i < items_shown; ++i) {
-        float inv_x = menu_x + 10.0f + i * 190.0f;
-        float inv_y = y_offset;
-        float inv_w = 180.0f;
-        float inv_h = 20.0f;
-        
-        bool mouse_over_inv = (mouse.x >= inv_x && mouse.x <= inv_x + inv_w &&
-                               mouse.y >= inv_y && mouse.y <= inv_y + inv_h);
-        bool is_selected = (i == selected_inventory_index);
-        
-        glm::vec3 inv_color;
-        if (is_selected) {
-            inv_color = glm::vec3(1.0f, 1.0f, 0.0f); // Yellow when selected
-        } else if (mouse_over_inv) {
-            inv_color = inventory[i]->GetColor() * 1.5f; // Bright when hovered
-        } else {
-            inv_color = inventory[i]->GetColor(); // Normal
-        }
-        
-        std::string item_name = inventory[i]->GetName();
-        // Shorten if too long
-        if (item_name.length() > 20) item_name = item_name.substr(0, 17) + "...";
-        font_->RenderText(item_name, inv_x, inv_y, 0.5f, inv_color);
-        
-        // Click detection
-        if (mouse_over_inv && input->IsMouseButtonJustPressed(0)) {
-            inventory_clicked = i;
-        }
-    }
+    // Render item grid on the right side
+    RenderItemGrid(item_manager, input, selected_inventory_index, window_width, window_height, inventory_clicked);
     
     // Show hint
+    text_shader_->Use();
+    text_shader_->SetUniform("projection", glm::ortho(0.0f, (float)window_width, (float)window_height, 0.0f));
+    text_shader_->SetUniform("text", 0);
     text_shader_->SetUniform("text_color", glm::vec3(0.7f, 0.7f, 0.7f));
-    font_->RenderText("Click item then slot to equip. ESC to close.", menu_x + 10.0f, y_offset + 30.0f, 0.5f, glm::vec3(0.7f, 0.7f, 0.7f));
-    y_offset += 30.0f;
+    font_->RenderText("Click item from grid, then click slot. ESC to close.", menu_x + 10.0f, y_offset, 0.5f, glm::vec3(0.7f, 0.7f, 0.7f));
+    y_offset += 25.0f;
     
     // SELL button
     float sell_x = menu_x + menu_width - 100.0f;
@@ -490,6 +461,10 @@ void UIManager::RenderInventoryScreen(class ItemManager* item_manager, int windo
             text_shader_->SetUniform("text_color", color);
             
             std::string display = std::to_string(i+1) + ". " + item->GetName();
+            int stack_count = item->GetStackCount();
+            if (stack_count > 1) {
+                display += " x" + std::to_string(stack_count);
+            }
             font_->RenderText(display, cx, cy, 0.7f, color);
             cy += 25.0f;
             
@@ -507,6 +482,98 @@ void UIManager::RenderInventoryScreen(class ItemManager* item_manager, int windo
     font_->RenderText("Press I to close, RMB on turret to equip items", cx - 100.0f, cy, 0.6f, glm::vec3(1.0f, 1.0f, 0.0f));
     
     if (depth_enabled) glEnable(GL_DEPTH_TEST);
+}
+
+void UIManager::RenderItemGrid(ItemManager* item_manager, InputManager* input, int selected_index,
+                               int window_width, int window_height, int& clicked_item_index) {
+    if (!font_ || !text_shader_ || !item_manager || !input) return;
+    
+    clicked_item_index = -1;
+    
+    text_shader_->Use();
+    glm::mat4 projection = glm::ortho(0.0f, (float)window_width, (float)window_height, 0.0f);
+    text_shader_->SetUniform("projection", projection);
+    text_shader_->SetUniform("text", 0);
+    
+    // Grid settings
+    const float grid_x = window_width - 350.0f; // Right side
+    const float grid_y = 50.0f;
+    const float cell_width = 160.0f;
+    const float cell_height = 30.0f;
+    const int columns = 2;
+    
+    // Title
+    text_shader_->SetUniform("text_color", glm::vec3(0.0f, 1.0f, 1.0f));
+    font_->RenderText("INVENTORY", grid_x, grid_y, 0.9f, glm::vec3(0.0f, 1.0f, 1.0f));
+    
+    // Get inventory
+    const auto& inventory = item_manager->GetInventory();
+    if (inventory.empty()) {
+        text_shader_->SetUniform("text_color", glm::vec3(0.6f, 0.6f, 0.6f));
+        font_->RenderText("Empty", grid_x, grid_y + 35.0f, 0.6f, glm::vec3(0.6f, 0.6f, 0.6f));
+        return;
+    }
+    
+    // Get mouse position
+    glm::vec2 mouse = input->GetMousePosition();
+    
+    // Render items in grid
+    float current_x = grid_x;
+    float current_y = grid_y + 40.0f;
+    int col = 0;
+    
+    for (size_t i = 0; i < inventory.size(); ++i) {
+        const auto& item = inventory[i];
+        if (!item) continue;
+        
+        // Calculate cell position
+        float cell_x = current_x;
+        float cell_y = current_y;
+        
+        // Mouse hover detection
+        bool mouse_over = (mouse.x >= cell_x && mouse.x <= cell_x + cell_width &&
+                          mouse.y >= cell_y && mouse.y <= cell_y + cell_height);
+        
+        // Render item
+        bool is_selected = (static_cast<int>(i) == selected_index);
+        glm::vec3 color = item->GetColor();
+        if (is_selected) {
+            color = glm::vec3(1.0f, 1.0f, 0.0f); // Yellow when selected
+        } else if (mouse_over) {
+            color = color * 1.5f; // Brighten on hover
+        }
+        
+        std::string name = item->GetName();
+        int stack_count = item->GetStackCount();
+        
+        // Shorten name if needed
+        if (name.length() > 15) {
+            name = name.substr(0, 12) + "...";
+        }
+        
+        // Add stack count
+        if (stack_count > 1) {
+            name += " x" + std::to_string(stack_count);
+        }
+        
+        text_shader_->SetUniform("text_color", color);
+        font_->RenderText(name, cell_x, cell_y, 0.6f, color);
+        
+        // Click detection
+        if (mouse_over && input->IsMouseButtonJustPressed(0)) {
+            clicked_item_index = static_cast<int>(i);
+        }
+        
+        // Move to next cell
+        col++;
+        if (col >= columns) {
+            col = 0;
+            current_x = grid_x;
+            current_y += cell_height + 5.0f;
+        } else {
+            current_x += cell_width + 10.0f;
+        }
+    }
 }
 
 void UIManager::RenderMainMenu(int window_width, int window_height, int selected_index) {
