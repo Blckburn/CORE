@@ -37,6 +37,8 @@ void WaveManager::StartGame() {
     
     std::cout << "=== GAME STARTED ===" << std::endl;
     std::cout << "Get ready for wave 1..." << std::endl;
+    std::cout << "Wave delay: " << wave_delay_timer_ << " seconds" << std::endl;
+    std::cout.flush();
 }
 
 void WaveManager::StartNextWave() {
@@ -54,6 +56,7 @@ void WaveManager::StartNextWave() {
     std::cout << "\n=== WAVE " << current_wave_ << " STARTED ===" << std::endl;
     std::cout << "Enemies: " << enemies_to_spawn_this_wave_ << std::endl;
     std::cout << "Spawn interval: " << spawn_interval_ << "s" << std::endl;
+    std::cout.flush();
 }
 
 void WaveManager::CalculateWaveParameters() {
@@ -75,6 +78,7 @@ void WaveManager::CalculateWaveParameters() {
 void WaveManager::SpawnEnemy() {
     if (!enemy_spawner_) {
         std::cout << "ERROR: No enemy spawner set!" << std::endl;
+        std::cout.flush();
         return;
     }
     
@@ -82,6 +86,7 @@ void WaveManager::SpawnEnemy() {
     enemies_spawned_this_wave_++;
     
     std::cout << "Enemy spawned: " << enemies_spawned_this_wave_ << "/" << enemies_to_spawn_this_wave_ << std::endl;
+    std::cout.flush();
 }
 
 void WaveManager::OnEnemyDestroyed() {
@@ -136,6 +141,15 @@ void WaveManager::Update(float delta_time) {
     if (!wave_active_) {
         if (wave_delay_timer_ > 0.0f) {
             wave_delay_timer_ -= delta_time;
+            
+            // Вывод каждую секунду для отладки
+            static float debug_timer = 0.0f;
+            debug_timer += delta_time;
+            if (debug_timer >= 1.0f) {
+                std::cout << "Time until next wave: " << wave_delay_timer_ << "s" << std::endl;
+                std::cout.flush();
+                debug_timer = 0.0f;
+            }
             
             if (wave_delay_timer_ <= 0.0f) {
                 StartNextWave();

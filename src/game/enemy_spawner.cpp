@@ -67,7 +67,7 @@ int EnemySpawner::GetAliveEnemyCount() const {
 }
 
 void EnemySpawner::SpawnEnemy() {
-    if (!spawning_enabled_) return;
+    // Note: WaveManager controls when to spawn, so we don't check spawning_enabled_ here
     
     // Generate spawn position
     glm::vec3 spawn_pos = GenerateSpawnPosition();
