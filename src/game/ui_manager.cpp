@@ -4,7 +4,9 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 #include <glad/glad.h>
+#include <glm/gtc/matrix_transform.hpp>
 
 UIManager::UIManager()
     : shader_(nullptr)
@@ -29,20 +31,22 @@ bool UIManager::Initialize(Shader* shader) {
 }
 
 void UIManager::Render(WaveManager* wave_manager, int window_width, int window_height) {
-    if (!initialized_ || !wave_manager) return;
+    if (!initialized_ || !wave_manager || !shader_) return;
     
-    // Используем ортографическую проекцию для 2D UI
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, window_width, window_height, 0, -1, 1);
-    
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+    // Сохраняем текущее состояние
+    GLboolean depth_test_enabled = glIsEnabled(GL_DEPTH_TEST);
     
     // Отключаем depth test для UI
     glDisable(GL_DEPTH_TEST);
+    
+    // Используем наш shader
+    shader_->Use();
+    
+    // Создаём ортографическую проекцию для 2D UI
+    glm::mat4 projection = glm::ortho(0.0f, (float)window_width, (float)window_height, 0.0f, -1.0f, 1.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    shader_->SetUniform("projection", projection);
+    shader_->SetUniform("view", view);
     
     // Получаем данные от WaveManager
     int current_wave = wave_manager->GetCurrentWave();
@@ -52,7 +56,7 @@ void UIManager::Render(WaveManager* wave_manager, int window_width, int window_h
     
     // Рисуем UI элементы
     float ui_y = 20.0f;
-    float ui_spacing = 40.0f;
+    float ui_spacing = 50.0f;
     glm::vec3 cyan_color(0.0f, 1.0f, 1.0f);
     glm::vec3 green_color(0.0f, 1.0f, 0.0f);
     glm::vec3 red_color(1.0f, 0.0f, 0.0f);
@@ -80,33 +84,57 @@ void UIManager::Render(WaveManager* wave_manager, int window_width, int window_h
     RenderBar(window_width - 220.0f, 20.0f, 200.0f, 20.0f, health_percent, cyan_color);
     
     // Восстанавливаем состояние
-    glEnable(GL_DEPTH_TEST);
-    
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
+    if (depth_test_enabled) {
+        glEnable(GL_DEPTH_TEST);
+    }
 }
 
 void UIManager::RenderBar(float x, float y, float width, float height, float fill_percent, const glm::vec3& color) {
+    glm::mat4 model = glm::mat4(1.0f);
+    shader_->SetUniform("model", model);
+    
     // Рисуем рамку
-    glColor3f(color.r * 0.3f, color.g * 0.3f, color.b * 0.3f);
-    glBegin(GL_LINE_LOOP);
-    glVertex2f(x, y);
-    glVertex2f(x + width, y);
-    glVertex2f(x + width, y + height);
-    glVertex2f(x, y + height);
-    glEnd();
+    float outline_vertices[] = {
+        x, y,
+        x + width, y,
+        x + width, y + height,
+        x, y + height
+    };
+    
+    unsigned int VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(outline_vertices), outline_vertices, GL_STATIC_DRAW);
+    
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    
+    shader_->SetUniform("color", color * 0.3f);
+    glDrawArrays(GL_LINE_LOOP, 0, 4);
     
     // Рисуем заполнение
     float fill_width = width * fill_percent;
-    glColor3f(color.r, color.g, color.b);
-    glBegin(GL_QUADS);
-    glVertex2f(x + 2, y + 2);
-    glVertex2f(x + fill_width - 2, y + 2);
-    glVertex2f(x + fill_width - 2, y + height - 2);
-    glVertex2f(x + 2, y + height - 2);
-    glEnd();
+    float fill_vertices[] = {
+        x + 2, y + 2,
+        x + fill_width - 2, y + 2,
+        x + fill_width - 2, y + height - 2,
+        x + 2, y + 2,
+        x + fill_width - 2, y + height - 2,
+        x + 2, y + height - 2
+    };
+    
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(fill_vertices), fill_vertices, GL_STATIC_DRAW);
+    
+    shader_->SetUniform("color", color);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    
+    glBindVertexArray(0);
+    glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &VAO);
 }
 
 void UIManager::RenderNumber(int number, float x, float y, float scale, const glm::vec3& color) {
@@ -127,7 +155,10 @@ void UIManager::RenderNumber(int number, float x, float y, float scale, const gl
 }
 
 void UIManager::RenderDigit(int digit, float x, float y, float scale, const glm::vec3& color) {
-    glColor3f(color.r, color.g, color.b);
+    glm::mat4 model = glm::mat4(1.0f);
+    shader_->SetUniform("model", model);
+    shader_->SetUniform("color", color);
+    
     glLineWidth(2.0f * scale);
     
     // Простые сегменты для цифр (7-сегментный дисплей стиль)
@@ -150,30 +181,71 @@ void UIManager::RenderDigit(int digit, float x, float y, float scale, const glm:
         case 9: segments[0]=1; segments[1]=1; segments[2]=1; segments[3]=1; segments[4]=0; segments[5]=1; segments[6]=1; break;
     }
     
-    glBegin(GL_LINES);
+    // Собираем все линии в один массив
+    std::vector<float> vertices;
     
     // Segment 0 (top)
-    if (segments[0]) { glVertex2f(x, y); glVertex2f(x + w, y); }
+    if (segments[0]) { 
+        vertices.push_back(x); vertices.push_back(y);
+        vertices.push_back(x + w); vertices.push_back(y);
+    }
     
     // Segment 1 (top-left)
-    if (segments[1]) { glVertex2f(x, y); glVertex2f(x, y + h/2); }
+    if (segments[1]) { 
+        vertices.push_back(x); vertices.push_back(y);
+        vertices.push_back(x); vertices.push_back(y + h/2);
+    }
     
     // Segment 2 (top-right)
-    if (segments[2]) { glVertex2f(x + w, y); glVertex2f(x + w, y + h/2); }
+    if (segments[2]) { 
+        vertices.push_back(x + w); vertices.push_back(y);
+        vertices.push_back(x + w); vertices.push_back(y + h/2);
+    }
     
     // Segment 3 (middle)
-    if (segments[3]) { glVertex2f(x, y + h/2); glVertex2f(x + w, y + h/2); }
+    if (segments[3]) { 
+        vertices.push_back(x); vertices.push_back(y + h/2);
+        vertices.push_back(x + w); vertices.push_back(y + h/2);
+    }
     
     // Segment 4 (bottom-left)
-    if (segments[4]) { glVertex2f(x, y + h/2); glVertex2f(x, y + h); }
+    if (segments[4]) { 
+        vertices.push_back(x); vertices.push_back(y + h/2);
+        vertices.push_back(x); vertices.push_back(y + h);
+    }
     
     // Segment 5 (bottom-right)
-    if (segments[5]) { glVertex2f(x + w, y + h/2); glVertex2f(x + w, y + h); }
+    if (segments[5]) { 
+        vertices.push_back(x + w); vertices.push_back(y + h/2);
+        vertices.push_back(x + w); vertices.push_back(y + h);
+    }
     
     // Segment 6 (bottom)
-    if (segments[6]) { glVertex2f(x, y + h); glVertex2f(x + w, y + h); }
+    if (segments[6]) { 
+        vertices.push_back(x); vertices.push_back(y + h);
+        vertices.push_back(x + w); vertices.push_back(y + h);
+    }
     
-    glEnd();
+    if (vertices.empty()) return;
+    
+    // Рисуем все линии
+    unsigned int VAO, VBO;
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    
+    glDrawArrays(GL_LINES, 0, vertices.size() / 2);
+    
+    glBindVertexArray(0);
+    glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &VAO);
+    
     glLineWidth(1.0f);
 }
 
