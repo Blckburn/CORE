@@ -1,6 +1,7 @@
 #include "ui_manager.h"
 #include "wave_manager.h"
 #include "graphics/shader.h"
+#include "graphics/font.h"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -10,6 +11,8 @@
 
 UIManager::UIManager()
     : shader_(nullptr)
+    , text_shader_(nullptr)
+    , font_(nullptr)
     , initialized_(false) {
 }
 
@@ -24,9 +27,72 @@ bool UIManager::Initialize(Shader* shader) {
     }
     
     shader_ = shader;
+    
+    // Загружаем текстовый шейдер
+    text_shader_ = new Shader();
+    
+    // Пробуем разные пути к текстовым шейдерам
+    std::vector<std::string> shader_paths = {
+        "assets/shaders/",
+        "../assets/shaders/",
+        "../../assets/shaders/",
+        "build/assets/shaders/"
+    };
+    
+    bool text_shader_loaded = false;
+    for (const auto& path : shader_paths) {
+        std::string vs_path = path + "text.vs";
+        std::string fs_path = path + "text.fs";
+        if (text_shader_->LoadFromFiles(vs_path, fs_path)) {
+            std::cout << "Text shader loaded successfully from: " << path << std::endl;
+            text_shader_loaded = true;
+            break;
+        }
+    }
+    
+    if (!text_shader_loaded) {
+        std::cout << "UIManager::Initialize: Failed to load text shader from any path" << std::endl;
+        delete text_shader_;
+        text_shader_ = nullptr;
+        return false;
+    }
+    
+    // Загружаем шрифт
+    font_ = new Font();
+    
+    // Пробуем разные пути к шрифту
+    std::vector<std::string> font_paths = {
+        "assets/fonts/RobotoMono-Regular.ttf",
+        "../assets/fonts/RobotoMono-Regular.ttf",
+        "../../assets/fonts/RobotoMono-Regular.ttf",
+        "build/assets/fonts/RobotoMono-Regular.ttf"
+    };
+    
+    std::cout << "Attempting to load font from different paths:" << std::endl;
+    bool font_loaded = false;
+    for (const auto& path : font_paths) {
+        std::cout << "  Trying path: " << path << "... ";
+        if (font_->LoadFont(path, 32)) {
+            std::cout << "SUCCESS!" << std::endl;
+            font_loaded = true;
+            break;
+        } else {
+            std::cout << "FAILED" << std::endl;
+        }
+    }
+    
+    if (!font_loaded) {
+        std::cout << "UIManager::Initialize: Failed to load font from any path" << std::endl;
+        delete font_;
+        font_ = nullptr;
+        delete text_shader_;
+        text_shader_ = nullptr;
+        return false;
+    }
+    
     initialized_ = true;
     
-    std::cout << "UI Manager initialized successfully!" << std::endl;
+    std::cout << "UI Manager initialized successfully with font!" << std::endl;
     return true;
 }
 
@@ -64,36 +130,36 @@ void UIManager::Render(WaveManager* wave_manager, int window_width, int window_h
     glm::vec3 white_color(1.0f, 1.0f, 1.0f);
     
     // Wave number with label
-    RenderSimpleText("WAVE", 20.0f, ui_y, 1.5f, cyan_color);
-    RenderNumber(current_wave, 20.0f, ui_y + 25.0f, 2.0f, cyan_color);
+    RenderText("WAVE", 20.0f, ui_y, 1.0f, cyan_color);
+    RenderNumber(current_wave, 20.0f, ui_y + 25.0f, 1.0f, cyan_color);
     ui_y += ui_spacing;
     
     // Score with label
-    RenderSimpleText("SCORE", 20.0f, ui_y, 1.5f, green_color);
-    RenderNumber(score, 20.0f, ui_y + 25.0f, 2.0f, green_color);
+    RenderText("SCORE", 20.0f, ui_y, 1.0f, green_color);
+    RenderNumber(score, 20.0f, ui_y + 25.0f, 1.0f, green_color);
     ui_y += ui_spacing;
     
     // Time or enemies remaining with label
     if (!is_wave_active && time_till_wave > 0.0f) {
-        RenderSimpleText("NEXT", 20.0f, ui_y, 1.5f, yellow_color);
+        RenderText("NEXT", 20.0f, ui_y, 1.0f, yellow_color);
         int seconds = static_cast<int>(time_till_wave);
-        RenderNumber(seconds, 20.0f, ui_y + 25.0f, 2.0f, yellow_color);
+        RenderNumber(seconds, 20.0f, ui_y + 25.0f, 1.0f, yellow_color);
     } else {
-        RenderSimpleText("ENEMIES", 20.0f, ui_y, 1.5f, red_color);
+        RenderText("ENEMIES", 20.0f, ui_y, 1.0f, red_color);
         int enemies = wave_manager->GetEnemiesRemaining();
-        RenderNumber(enemies, 20.0f, ui_y + 25.0f, 2.0f, red_color);
+        RenderNumber(enemies, 20.0f, ui_y + 25.0f, 1.0f, red_color);
     }
     
     // Health bar with label
     float health_percent = wave_manager->GetCoreHealth() / 100.0f; // Получаем реальное здоровье
-    RenderSimpleText("CORE", window_width - 220.0f, 20.0f, 1.5f, cyan_color);
+    RenderText("CORE", window_width - 220.0f, 20.0f, 1.0f, cyan_color);
     RenderBar(window_width - 220.0f, 45.0f, 200.0f, 20.0f, health_percent, cyan_color);
     
     // Game status
     if (wave_manager->IsGameOver()) {
-        RenderSimpleText("GAME OVER", window_width/2 - 60.0f, window_height/2 - 20.0f, 3.0f, red_color);
+        RenderText("GAME OVER", window_width/2 - 60.0f, window_height/2 - 20.0f, 2.0f, red_color);
     } else if (!is_wave_active && time_till_wave > 0.0f) {
-        RenderSimpleText("PREPARING...", window_width/2 - 80.0f, window_height/2 - 20.0f, 2.0f, yellow_color);
+        RenderText("PREPARING...", window_width/2 - 80.0f, window_height/2 - 20.0f, 1.5f, yellow_color);
     }
     
     // Восстанавливаем состояние
@@ -151,169 +217,45 @@ void UIManager::RenderBar(float x, float y, float width, float height, float fil
 }
 
 void UIManager::RenderNumber(int number, float x, float y, float scale, const glm::vec3& color) {
-    if (number == 0) {
-        RenderDigit(0, x, y, scale, color);
-        return;
-    }
-    
-    // Получаем цифры числа
-    std::string num_str = std::to_string(number);
-    float offset_x = 0;
-    
-    for (char c : num_str) {
-        int digit = c - '0';
-        RenderDigit(digit, x + offset_x, y, scale, color);
-        offset_x += 15.0f * scale; // Ширина цифры
-    }
+    // Преобразуем число в строку и используем настоящий шрифт
+    std::string number_str = std::to_string(number);
+    RenderText(number_str, x, y, scale, color);
 }
 
 void UIManager::RenderDigit(int digit, float x, float y, float scale, const glm::vec3& color) {
-    glm::mat4 model = glm::mat4(1.0f);
-    shader_->SetUniform("model", model);
-    shader_->SetUniform("color", color);
-    
-    glLineWidth(2.0f * scale);
-    
-    // Простые сегменты для цифр (7-сегментный дисплей стиль)
-    float w = 10.0f * scale;
-    float h = 20.0f * scale;
-    
-    // Определяем какие сегменты рисовать для каждой цифры
-    bool segments[7] = {false};
-    
-    switch(digit) {
-        case 0: segments[0]=1; segments[1]=1; segments[2]=1; segments[3]=0; segments[4]=1; segments[5]=1; segments[6]=1; break;
-        case 1: segments[0]=0; segments[1]=0; segments[2]=1; segments[3]=0; segments[4]=0; segments[5]=1; segments[6]=0; break;
-        case 2: segments[0]=1; segments[1]=0; segments[2]=1; segments[3]=1; segments[4]=1; segments[5]=0; segments[6]=1; break;
-        case 3: segments[0]=1; segments[1]=0; segments[2]=1; segments[3]=1; segments[4]=0; segments[5]=1; segments[6]=1; break;
-        case 4: segments[0]=0; segments[1]=1; segments[2]=1; segments[3]=1; segments[4]=0; segments[5]=1; segments[6]=0; break;
-        case 5: segments[0]=1; segments[1]=1; segments[2]=0; segments[3]=1; segments[4]=0; segments[5]=1; segments[6]=1; break;
-        case 6: segments[0]=1; segments[1]=1; segments[2]=0; segments[3]=1; segments[4]=1; segments[5]=1; segments[6]=1; break;
-        case 7: segments[0]=1; segments[1]=0; segments[2]=1; segments[3]=0; segments[4]=0; segments[5]=1; segments[6]=0; break;
-        case 8: segments[0]=1; segments[1]=1; segments[2]=1; segments[3]=1; segments[4]=1; segments[5]=1; segments[6]=1; break;
-        case 9: segments[0]=1; segments[1]=1; segments[2]=1; segments[3]=1; segments[4]=0; segments[5]=1; segments[6]=1; break;
-    }
-    
-    // Собираем все линии в один массив
-    std::vector<float> vertices;
-    
-    // Segment 0 (top)
-    if (segments[0]) { 
-        vertices.push_back(x); vertices.push_back(y);
-        vertices.push_back(x + w); vertices.push_back(y);
-    }
-    
-    // Segment 1 (top-left)
-    if (segments[1]) { 
-        vertices.push_back(x); vertices.push_back(y);
-        vertices.push_back(x); vertices.push_back(y + h/2);
-    }
-    
-    // Segment 2 (top-right)
-    if (segments[2]) { 
-        vertices.push_back(x + w); vertices.push_back(y);
-        vertices.push_back(x + w); vertices.push_back(y + h/2);
-    }
-    
-    // Segment 3 (middle)
-    if (segments[3]) { 
-        vertices.push_back(x); vertices.push_back(y + h/2);
-        vertices.push_back(x + w); vertices.push_back(y + h/2);
-    }
-    
-    // Segment 4 (bottom-left)
-    if (segments[4]) { 
-        vertices.push_back(x); vertices.push_back(y + h/2);
-        vertices.push_back(x); vertices.push_back(y + h);
-    }
-    
-    // Segment 5 (bottom-right)
-    if (segments[5]) { 
-        vertices.push_back(x + w); vertices.push_back(y + h/2);
-        vertices.push_back(x + w); vertices.push_back(y + h);
-    }
-    
-    // Segment 6 (bottom)
-    if (segments[6]) { 
-        vertices.push_back(x); vertices.push_back(y + h);
-        vertices.push_back(x + w); vertices.push_back(y + h);
-    }
-    
-    if (vertices.empty()) return;
-    
-    // Рисуем все линии
-    unsigned int VAO, VBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    
-    glDrawArrays(GL_LINES, 0, vertices.size() / 2);
-    
-    glBindVertexArray(0);
-    glDeleteBuffers(1, &VBO);
-    glDeleteVertexArrays(1, &VAO);
-    
-    glLineWidth(1.0f);
-}
-
-void UIManager::RenderSimpleText(const std::string& text, float x, float y, float scale, const glm::vec3& color) {
-    glm::mat4 model = glm::mat4(1.0f);
-    shader_->SetUniform("model", model);
-    shader_->SetUniform("color", color);
-    
-    glLineWidth(2.0f * scale);
-    
-    // Простой рендеринг текста через прямоугольники (для заголовков)
-    float char_width = 8.0f * scale;
-    float char_height = 12.0f * scale;
-    
-    for (size_t i = 0; i < text.length(); ++i) {
-        float char_x = x + i * char_width;
-        float char_y = y;
-        
-        // Рисуем простой прямоугольник для каждой буквы
-        std::vector<float> vertices = {
-            char_x, char_y,
-            char_x + char_width, char_y,
-            char_x + char_width, char_y + char_height,
-            char_x, char_y,
-            char_x + char_width, char_y + char_height,
-            char_x, char_y + char_height
-        };
-        
-        unsigned int VAO, VBO;
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-        
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-        
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        
-        glDrawArrays(GL_LINES, 0, vertices.size() / 2);
-        
-        glBindVertexArray(0);
-        glDeleteBuffers(1, &VBO);
-        glDeleteVertexArrays(1, &VAO);
-    }
-    
-    glLineWidth(1.0f);
+    // Преобразуем цифру в строку и используем настоящий шрифт
+    std::string digit_str = std::to_string(digit);
+    RenderText(digit_str, x, y, scale, color);
 }
 
 void UIManager::RenderText(const std::string& text, float x, float y, float scale, const glm::vec3& color) {
-    // Используем простой рендеринг
-    RenderSimpleText(text, x, y, scale, color);
+    if (!font_ || !text_shader_) return;
+    
+    // Используем текстовый шейдер
+    text_shader_->Use();
+    
+    // Настраиваем шейдер для текста
+    glm::mat4 projection = glm::ortho(0.0f, 1280.0f, 720.0f, 0.0f);
+    text_shader_->SetUniform("projection", projection);
+    text_shader_->SetUniform("text_color", color);
+    
+    // Устанавливаем uniform для текстуры (КРИТИЧЕСКИ ВАЖНО!)
+    text_shader_->SetUniform("text", 0);
+    
+    // Рендерим текст через Font
+    font_->RenderText(text, x, y, scale, color);
 }
 
 void UIManager::Shutdown() {
+    if (font_) {
+        font_->Shutdown();
+        delete font_;
+        font_ = nullptr;
+    }
+    if (text_shader_) {
+        delete text_shader_;
+        text_shader_ = nullptr;
+    }
     initialized_ = false;
 }
 

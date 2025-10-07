@@ -26,6 +26,8 @@ public:
     void StartNextWave();
     void OnEnemyDestroyed();
     void OnEnemyReachedCore();
+    void SetPreparationDuration(float seconds) { wave_delay_duration_ = seconds; }
+    void SetInitialPreparation(float seconds) { wave_delay_timer_ = seconds; }
 
 private:
     EnemySpawner* enemy_spawner_;

@@ -5,6 +5,7 @@
 
 class Shader;
 class WaveManager;
+class Font;
 
 class UIManager {
 public:
@@ -17,11 +18,12 @@ public:
 
 private:
     Shader* shader_;
+    Shader* text_shader_;
+    Font* font_;
     bool initialized_;
     
-    // Простой текстовый рендеринг через OpenGL примитивы
+    // Текстовый рендеринг через FreeType
     void RenderText(const std::string& text, float x, float y, float scale, const glm::vec3& color);
-    void RenderSimpleText(const std::string& text, float x, float y, float scale, const glm::vec3& color);
     void RenderDigit(int digit, float x, float y, float scale, const glm::vec3& color);
     void RenderNumber(int number, float x, float y, float scale, const glm::vec3& color);
     void RenderBar(float x, float y, float width, float height, float fill_percent, const glm::vec3& color);

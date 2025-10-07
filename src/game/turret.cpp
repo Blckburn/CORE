@@ -110,8 +110,8 @@ void Turret::Fire() {
 void Turret::Fire(ProjectileManager* projectile_manager) {
     if (!current_target_ || !CanFire()) return;
     
-    // Create projectile from turret position to target
-    projectile_manager->CreateProjectile(position_, current_target_->GetPosition(), 30.0f, damage_);
+    // Create projectile from turret position to current target position
+    projectile_manager->CreateProjectile(position_, current_target_->GetPosition(), 30.0f, damage_, current_target_);
     
     // Update fire timing
     last_fire_time_ = 0.0f;

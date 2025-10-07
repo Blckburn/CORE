@@ -18,7 +18,7 @@ public:
     void Render(); // Placeholder, actual rendering in Game class
 
     // Projectile creation
-    void CreateProjectile(const glm::vec3& start_position, const glm::vec3& target_position, float speed, int damage);
+    void CreateProjectile(const glm::vec3& start_position, const glm::vec3& target_position, float speed, int damage, Enemy* target_enemy);
     
     // Wave manager integration
     void SetWaveManager(WaveManager* wave_manager) { wave_manager_ = wave_manager; }

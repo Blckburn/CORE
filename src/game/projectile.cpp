@@ -1,21 +1,23 @@
 #include "projectile.h"
+#include "enemy.h"
 #include <iostream>
 
 Projectile::Projectile()
     : position_(0.0f), target_position_(0.0f), direction_(0.0f), speed_(0.0f), damage_(0),
       color_(0.0f, 1.0f, 1.0f), // Cyan color like in TRON
       initialized_(false), active_(false), has_hit_target_(false),
-      lifetime_(3.0f), current_lifetime_(0.0f) {
+      lifetime_(3.0f), current_lifetime_(0.0f), target_enemy_(nullptr) {
 }
 
 Projectile::~Projectile() {
 }
 
-bool Projectile::Initialize(const glm::vec3& start_position, const glm::vec3& target_position, float speed, int damage) {
+bool Projectile::Initialize(const glm::vec3& start_position, const glm::vec3& target_position, float speed, int damage, Enemy* target_enemy) {
     position_ = start_position;
     target_position_ = target_position;
     speed_ = speed;
     damage_ = damage;
+    target_enemy_ = target_enemy;
     
     // Calculate direction to target
     direction_ = target_position - start_position;
@@ -52,15 +54,19 @@ void Projectile::Update(float delta_time) {
         return;
     }
     
-    // Move projectile
+    // If enemy is still alive, continue homing towards its current position
+    if (target_enemy_ && target_enemy_->IsAlive()) {
+        SetTarget(target_enemy_->GetPosition());
+    }
+
+    // Move projectile towards current target_position_
     position_ += direction_ * speed_ * delta_time;
     
-    // Check if projectile has reached target area
+    // Mark as reached when we arrive near the intended destination.
+    // Deactivation and damage resolution are handled in ProjectileManager.
     float distance_to_target = glm::length(target_position_ - position_);
-    if (distance_to_target < 1.0f) { // Hit radius
+    if (distance_to_target <= 1.2f) {
         has_hit_target_ = true;
-        active_ = false;
-        std::cout << "Projectile hit target at distance: " << distance_to_target << std::endl;
     }
 }
 

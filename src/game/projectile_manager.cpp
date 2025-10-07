@@ -30,42 +30,25 @@ void ProjectileManager::Update(float delta_time, const std::vector<std::unique_p
         if (projectile && projectile->IsActive()) {
             projectile->Update(delta_time);
             
-            // Update projectile target to closest enemy (homing missiles)
-            if (!enemies.empty()) {
-                float closest_distance = std::numeric_limits<float>::max();
-                glm::vec3 closest_enemy_pos = glm::vec3(0.0f);
-                
+            // Semi-homing: while enemy alive, projectile tracks it; if enemy died,
+            // projectile keeps last known target position and finishes flight.
+            if (projectile->HasHitTarget()) {
+                bool damaged = false;
                 for (const auto& enemy : enemies) {
                     if (enemy && enemy->IsAlive()) {
-                        float distance = glm::length(enemy->GetPosition() - projectile->GetPosition());
-                        if (distance < closest_distance) {
-                            closest_distance = distance;
-                            closest_enemy_pos = enemy->GetPosition();
+                        if (projectile->CheckHit(enemy->GetPosition(), 1.2f)) {
+                            enemy->TakeDamage(projectile->GetDamage());
+                            std::cout << "Projectile hit enemy for " << projectile->GetDamage() << " damage!" << std::endl;
+                            if (!enemy->IsAlive() && wave_manager_) {
+                                wave_manager_->OnEnemyDestroyed();
+                            }
+                            damaged = true;
+                            break;
                         }
                     }
                 }
-                
-                // Update projectile direction to closest enemy
-                if (closest_distance < std::numeric_limits<float>::max()) {
-                    projectile->UpdateTarget(closest_enemy_pos);
-                }
-            }
-            
-            // Check collision with enemies
-            for (const auto& enemy : enemies) {
-                if (enemy && enemy->IsAlive()) {
-                    if (projectile->CheckHit(enemy->GetPosition(), 1.0f)) {
-                        enemy->TakeDamage(projectile->GetDamage());
-                        projectile->SetActive(false); // Mark projectile as inactive
-                        std::cout << "Projectile hit enemy for " << projectile->GetDamage() << " damage!" << std::endl;
-                        
-                        // Notify wave manager if enemy is destroyed
-                        if (!enemy->IsAlive() && wave_manager_) {
-                            wave_manager_->OnEnemyDestroyed();
-                        }
-                        break;
-                    }
-                }
+                // Deactivate regardless of whether we damaged something
+                projectile->SetActive(false);
             }
             
             ++it;
@@ -80,9 +63,9 @@ void ProjectileManager::Render() {
     // Rendering is handled by the Game class
 }
 
-void ProjectileManager::CreateProjectile(const glm::vec3& start_position, const glm::vec3& target_position, float speed, int damage) {
+void ProjectileManager::CreateProjectile(const glm::vec3& start_position, const glm::vec3& target_position, float speed, int damage, Enemy* target_enemy) {
     auto projectile = std::make_unique<Projectile>();
-    if (projectile->Initialize(start_position, target_position, speed, damage)) {
+    if (projectile->Initialize(start_position, target_position, speed, damage, target_enemy)) {
         projectiles_.push_back(std::move(projectile));
         std::cout << "Created projectile #" << projectiles_.size() 
                   << " from (" << start_position.x << ", " << start_position.y << ", " << start_position.z << ")"

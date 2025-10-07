@@ -3,12 +3,14 @@
 #include <glm/glm.hpp>
 #include <memory>
 
+class Enemy; // forward declaration
+
 class Projectile {
 public:
     Projectile();
     ~Projectile();
 
-    bool Initialize(const glm::vec3& start_position, const glm::vec3& target_position, float speed, int damage);
+    bool Initialize(const glm::vec3& start_position, const glm::vec3& target_position, float speed, int damage, Enemy* target_enemy);
     void Update(float delta_time);
     void Render(); // Placeholder, actual rendering in Game class
 
@@ -25,6 +27,9 @@ public:
     bool CheckHit(const glm::vec3& target_position, float hit_radius) const;
     void SetActive(bool active) { active_ = active; }
 
+    // Target ownership
+    Enemy* GetTargetEnemy() const { return target_enemy_; }
+
 private:
     glm::vec3 position_;
     glm::vec3 target_position_;
@@ -39,4 +44,6 @@ private:
     
     float lifetime_; // Maximum time before projectile disappears
     float current_lifetime_;
+
+    Enemy* target_enemy_;
 };

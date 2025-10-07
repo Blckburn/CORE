@@ -35,6 +35,7 @@ public:
     const std::vector<std::unique_ptr<Enemy>>& GetEnemies() const { return enemies_; }
     int GetEnemyCount() const { return static_cast<int>(enemies_.size()); }
     int GetAliveEnemyCount() const;
+    void ClearAllEnemies();
 
     // Spawn a single enemy
     void SpawnEnemy();

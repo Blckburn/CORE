@@ -24,6 +24,7 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
+find_package(Freetype REQUIRED)
 
 # Include directories
 include_directories(src)
@@ -41,6 +42,7 @@ set(SOURCES
     src/graphics/mesh.cpp
     src/graphics/camera.cpp
     src/graphics/ray_caster.cpp
+    src/graphics/font.cpp
     src/game/game.cpp
     src/game/entity.cpp
     src/game/enemy.cpp
@@ -67,6 +69,7 @@ set(HEADERS
     src/graphics/mesh.h
     src/graphics/camera.h
     src/graphics/ray_caster.h
+    src/graphics/font.h
     src/game/game.h
     src/game/entity.h
     src/game/enemy.h
@@ -91,10 +94,12 @@ target_link_libraries(${PROJECT_NAME}
     glfw
     glm::glm
     glad::glad
+    Freetype::Freetype
 )
 
-# Copy shader files to build directory
+# Copy assets to build directory
 file(COPY assets/shaders DESTINATION ${CMAKE_BINARY_DIR}/assets/)
+file(COPY assets/fonts DESTINATION ${CMAKE_BINARY_DIR}/assets/)
 
 # Set output directory
 set_target_properties(${PROJECT_NAME} PROPERTIES

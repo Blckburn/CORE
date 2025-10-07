@@ -53,7 +53,26 @@ bool Game::Initialize(Renderer* renderer, InputManager* input) {
     
     // Initialize shader
     shader_ = std::make_unique<Shader>();
-    if (!shader_->LoadFromFiles("assets/shaders/basic.vert", "assets/shaders/basic.frag")) {
+    // Пробуем разные пути к шейдерам
+    std::vector<std::string> shader_paths = {
+        "assets/shaders/",
+        "../assets/shaders/",
+        "../../assets/shaders/",
+        "build/assets/shaders/"
+    };
+    
+    bool shader_loaded = false;
+    for (const auto& path : shader_paths) {
+        std::string vert_path = path + "basic.vert";
+        std::string frag_path = path + "basic.frag";
+        if (shader_->LoadFromFiles(vert_path, frag_path)) {
+            std::cout << "Shaders loaded successfully from: " << path << std::endl;
+            shader_loaded = true;
+            break;
+        }
+    }
+    
+    if (!shader_loaded) {
         std::cerr << "Failed to load shaders!" << std::endl;
         return false;
     }
@@ -196,6 +215,27 @@ void Game::Update() {
     }
     if (input_->IsKeyPressed(69)) { // GLFW_KEY_E
         camera_->SetZoom(camera_->GetZoom() - 2.0f);
+    }
+
+    // Hold R for 2 seconds to restart the game
+    static float r_hold_time = 0.0f;
+    if (input_->IsKeyPressed(82)) { // GLFW_KEY_R
+        r_hold_time += Time::GetDeltaTime();
+        if (r_hold_time > 2.0f) {
+            std::cout << "\nRestarting game..." << std::endl;
+            // Clear game state
+            if (projectile_manager_) {
+                // Remove active projectiles by recreating manager state
+                // (simple approach: reset vector implicitly by recreating object not needed here)
+            }
+            if (enemy_spawner_) enemy_spawner_->ClearAllEnemies();
+            if (turret_manager_) turret_manager_->ClearAllTurrets();
+            // Reset waves
+            if (wave_manager_) wave_manager_->StartGame();
+            r_hold_time = 0.0f;
+        }
+    } else {
+        r_hold_time = 0.0f;
     }
     
     // Update camera

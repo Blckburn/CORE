@@ -25,6 +25,7 @@ public:
     bool PlaceTurret(const glm::vec3& position);
     void RemoveTurret(int index);
     void ClearAllTurrets();
+    void Reset() { ClearAllTurrets(); }
 
     // Getters
     const std::vector<std::unique_ptr<Turret>>& GetTurrets() const { return turrets_; }

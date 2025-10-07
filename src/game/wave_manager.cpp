@@ -13,7 +13,7 @@ WaveManager::WaveManager()
     , enemies_to_spawn_this_wave_(0)
     , wave_delay_timer_(0.0f)
     , spawn_timer_(0.0f)
-    , wave_delay_duration_(5.0f)      // 5 секунд между волнами
+    , wave_delay_duration_(10.0f)     // 10 секунд между волнами для подготовки
     , initial_spawn_interval_(0.5f)   // 2 врага в секунду изначально
     , spawn_interval_(0.5f)
     , base_enemies_per_wave_(10)      // 10 врагов в первой волне
@@ -33,7 +33,7 @@ void WaveManager::StartGame() {
     enemies_remaining_ = 0;
     total_score_ = 0;
     core_health_ = 100;
-    wave_delay_timer_ = 2.0f; // Небольшая задержка перед первой волной
+    wave_delay_timer_ = 10.0f; // Увеличили задержку перед первой волной для подготовки
     
     std::cout << "=== GAME STARTED ===" << std::endl;
     std::cout << "Get ready for wave 1..." << std::endl;

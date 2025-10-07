@@ -92,6 +92,10 @@ void EnemySpawner::CleanupDeadEnemies() {
     );
 }
 
+void EnemySpawner::ClearAllEnemies() {
+    enemies_.clear();
+}
+
 glm::vec3 EnemySpawner::GenerateSpawnPosition() {
     // Generate random angle around Y axis (0 to 2π)
     float angle = angle_dist_(gen_);
