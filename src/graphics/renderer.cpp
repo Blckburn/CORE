@@ -1,3 +1,4 @@
+// Implementation of OpenGL renderer
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "renderer.h"

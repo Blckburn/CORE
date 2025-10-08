@@ -1,3 +1,4 @@
+// Implementation of UI rendering
 #include "ui_manager.h"
 #include "wave_manager.h"
 #include "turret_manager.h"
@@ -394,8 +395,8 @@ void UIManager::RenderTurretMenu(class Turret* turret, class Camera* camera, cla
     }
     y_offset += 30.0f;
     
-    // Render item grid on the right side
-    RenderItemGrid(item_manager, input, selected_inventory_index, window_width, window_height, inventory_clicked);
+    // Render inventory grid with click detection on the right side
+    RenderInventoryGridWithClicks(item_manager, input, selected_inventory_index, window_width, window_height, inventory_clicked);
     
     // Show hint
     text_shader_->Use();
@@ -433,55 +434,246 @@ void UIManager::RenderInventoryScreen(class ItemManager* item_manager, int windo
     GLboolean depth_enabled = glIsEnabled(GL_DEPTH_TEST);
     glDisable(GL_DEPTH_TEST);
     
-    // Dim background
-    RenderDimBackground(window_width, window_height, 0.5f);
+    // No background - inventory is transparent overlay on game
+    // This allows seeing the game while browsing inventory
+    
+    // Render inventory grid
+    RenderInventoryGrid(item_manager, window_width, window_height);
+    
+    if (depth_enabled) glEnable(GL_DEPTH_TEST);
+}
+
+void UIManager::RenderInventoryGrid(class ItemManager* item_manager, int window_width, int window_height) {
+    if (!font_ || !text_shader_ || !item_manager || !item_manager->GetItemDatabase()) return;
+    
+    // Enable text rendering
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     text_shader_->Use();
-    glm::mat4 projection = glm::ortho(0.0f, (float)viewport_width_, (float)viewport_height_, 0.0f);
+    glm::mat4 projection = glm::ortho(0.0f, (float)window_width, (float)window_height, 0.0f);
     text_shader_->SetUniform("projection", projection);
     text_shader_->SetUniform("text", 0);
     
-    float cx = window_width / 2.0f - 300.0f;
-    float cy = window_height / 2.0f - 200.0f;
+    // Grid constants - centered with wider cells
+    const float CELL_SIZE = 100.0f;  // Wider cells for text
+    const float CELL_SPACING = 15.0f;
+    const float START_X = (window_width - (5 * CELL_SIZE + 4 * CELL_SPACING)) / 2.0f;  // Centered horizontally
+    const float START_Y = 250.0f;   // Lower to avoid top UI
     
     // Title
     text_shader_->SetUniform("text_color", glm::vec3(0.0f, 1.0f, 1.0f));
-    font_->RenderText("INVENTORY", cx, cy, 1.2f, glm::vec3(0.0f, 1.0f, 1.0f));
-    cy += 40.0f;
+    font_->RenderText("ITEM INVENTORY", floorf(START_X), 150.0f, 1.2f, glm::vec3(0.0f, 1.0f, 1.0f));
     
-    // Show all items in inventory
-    const auto& inventory = item_manager->GetInventory();
-    if (inventory.empty()) {
-        text_shader_->SetUniform("text_color", glm::vec3(0.7f, 0.7f, 0.7f));
-        font_->RenderText("No items in inventory", cx, cy, 0.8f, glm::vec3(0.7f, 0.7f, 0.7f));
-    } else {
-        for (size_t i = 0; i < inventory.size(); ++i) {
-            const auto& item = inventory[i];
-            glm::vec3 color = item->GetColor();
-            text_shader_->SetUniform("text_color", color);
+    // Subtitle
+    text_shader_->SetUniform("text_color", glm::vec3(0.7f, 0.7f, 0.7f));
+    font_->RenderText("(View Only)", floorf(START_X), 180.0f, 0.7f, glm::vec3(0.7f, 0.7f, 0.7f));
+    
+    // Get inventory grid from database
+    auto grid = item_manager->GetItemDatabase()->GetInventoryGrid();
+    
+    // Render column headers (rarities)
+    std::vector<std::string> rarity_names = {
+        "Common", "Uncommon", "Rare", "Epic", "Legendary"
+    };
+    
+    // Header row label
+    text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 1.0f));
+    font_->RenderText("Rarity", floorf(START_X - 90.0f), floorf(START_Y - 30.0f), 0.7f, glm::vec3(1.0f, 1.0f, 1.0f));
+    
+    for (int col = 0; col < 5; ++col) {
+        float x = floorf(START_X + col * (CELL_SIZE + CELL_SPACING));
+        
+        // Color headers by rarity
+        glm::vec3 header_color;
+        switch (col) {
+            case 0: header_color = glm::vec3(0.8f, 0.8f, 0.8f); break; // Common - Light gray
+            case 1: header_color = glm::vec3(0.2f, 0.8f, 0.2f); break; // Uncommon - Green
+            case 2: header_color = glm::vec3(0.3f, 0.5f, 1.0f); break; // Rare - Blue
+            case 3: header_color = glm::vec3(0.7f, 0.3f, 1.0f); break; // Epic - Purple
+            case 4: header_color = glm::vec3(1.0f, 0.3f, 0.0f); break; // Legendary - Red/Orange
+        }
+        
+        text_shader_->SetUniform("text_color", header_color);
+        font_->RenderText(rarity_names[col], x, floorf(START_Y - 30.0f), 0.6f, header_color);
+    }
+    
+    // Render row headers (stat types)
+    std::vector<std::string> stat_names = {
+        "Damage", "Fire Rate", "Range", "Special"
+    };
+    
+    for (int row = 0; row < 4; ++row) {
+        float y = floorf(START_Y + row * (CELL_SIZE + CELL_SPACING));
+        text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 1.0f));
+        font_->RenderText(stat_names[row], floorf(START_X - 90.0f), y, 0.7f, glm::vec3(1.0f, 1.0f, 1.0f));
+    }
+    
+    // Render grid cells
+    for (int row = 0; row < 4; ++row) {
+        for (int col = 0; col < 5; ++col) {
+            float x = floorf(START_X + col * (CELL_SIZE + CELL_SPACING));
+            float y = floorf(START_Y + row * (CELL_SIZE + CELL_SPACING));
             
-            std::string display = std::to_string(i+1) + ". " + item->GetName();
-            int stack_count = item->GetStackCount();
-            if (stack_count > 1) {
-                display += " x" + std::to_string(stack_count);
+            // Check if we have data for this cell
+            bool discovered = false;
+            int quantity = 0;
+            
+            if (row < static_cast<int>(grid.size()) && col < static_cast<int>(grid[row].size())) {
+                const auto& item = grid[row][col];
+                discovered = item.discovered;
+                quantity = item.quantity;
             }
-            font_->RenderText(display, cx, cy, 0.7f, color);
-            cy += 25.0f;
             
-            // Show description
-            std::string desc = item->GetDescription();
-            text_shader_->SetUniform("text_color", glm::vec3(0.8f, 0.8f, 0.8f));
-            font_->RenderText("   " + desc.substr(0, desc.find('\n')), cx, cy, 0.5f, glm::vec3(0.8f, 0.8f, 0.8f));
-            cy += 20.0f;
+            // Render cell background with rarity colors
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            
+            if (discovered && quantity > 0) {
+                // Color by rarity for discovered items
+                switch (col) {
+                    case 0: // Common
+                        glColor4f(0.8f, 0.8f, 0.8f, 0.6f); // Light gray
+                        break;
+                    case 1: // Uncommon
+                        glColor4f(0.2f, 0.8f, 0.2f, 0.6f); // Green
+                        break;
+                    case 2: // Rare
+                        glColor4f(0.3f, 0.5f, 1.0f, 0.6f); // Blue
+                        break;
+                    case 3: // Epic
+                        glColor4f(0.7f, 0.3f, 1.0f, 0.6f); // Purple
+                        break;
+                    case 4: // Legendary
+                        glColor4f(1.0f, 0.3f, 0.0f, 0.6f); // Red/Orange
+                        break;
+                }
+            } else {
+                // Dark gray background for undiscovered items
+                glColor4f(0.2f, 0.2f, 0.2f, 0.5f);
+            }
+            
+            glBegin(GL_QUADS);
+            glVertex2f(x, y);
+            glVertex2f(x + CELL_SIZE, y);
+            glVertex2f(x + CELL_SIZE, y + CELL_SIZE);
+            glVertex2f(x, y + CELL_SIZE);
+            glEnd();
+            
+            // Render cell border
+            glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
+            glBegin(GL_LINE_LOOP);
+            glVertex2f(x, y);
+            glVertex2f(x + CELL_SIZE, y);
+            glVertex2f(x + CELL_SIZE, y + CELL_SIZE);
+            glVertex2f(x, y + CELL_SIZE);
+            glEnd();
+            
+            // Render cell content
+            if (discovered && quantity > 0) {
+                // Show quantity prominently
+                text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 1.0f));
+                font_->RenderText(std::to_string(quantity), floorf(x + 30.0f), floorf(y + 35.0f), 1.2f, glm::vec3(1.0f, 1.0f, 1.0f));
+                
+                // Show checkmark in corner
+                text_shader_->SetUniform("text_color", glm::vec3(0.0f, 1.0f, 0.0f));
+                font_->RenderText("+", floorf(x + CELL_SIZE - 20.0f), floorf(y + 15.0f), 0.8f, glm::vec3(0.0f, 1.0f, 0.0f));
+            } else {
+                // Show question mark for undiscovered
+                text_shader_->SetUniform("text_color", glm::vec3(0.5f, 0.5f, 0.5f));
+                font_->RenderText("?", floorf(x + 40.0f), floorf(y + 40.0f), 1.0f, glm::vec3(0.5f, 0.5f, 0.5f));
+            }
+            
+            // Render item name below the cell
+            if (discovered && quantity > 0) {
+                ItemRarity rarity = static_cast<ItemRarity>(col);
+                ItemStat stat_type = static_cast<ItemStat>(row);
+                
+                std::string item_name;
+                glm::vec3 name_color;
+                
+                // Generate item name based on rarity and stat
+                switch (rarity) {
+                    case ItemRarity::Common:
+                        item_name = "Common ";
+                        name_color = glm::vec3(0.8f, 0.8f, 0.8f); // Light gray
+                        break;
+                    case ItemRarity::Uncommon:
+                        item_name = "Uncommon ";
+                        name_color = glm::vec3(0.2f, 0.8f, 0.2f); // Green
+                        break;
+                    case ItemRarity::Rare:
+                        item_name = "Rare ";
+                        name_color = glm::vec3(0.3f, 0.5f, 1.0f); // Blue
+                        break;
+                    case ItemRarity::Epic:
+                        item_name = "Epic ";
+                        name_color = glm::vec3(0.7f, 0.3f, 1.0f); // Purple
+                        break;
+                    case ItemRarity::Legendary:
+                        item_name = "Legendary ";
+                        name_color = glm::vec3(1.0f, 0.3f, 0.0f); // Red/Orange
+                        break;
+                }
+                
+                // Add stat type to name
+                switch (stat_type) {
+                    case ItemStat::Damage:
+                        item_name += "Damage";
+                        break;
+                    case ItemStat::FireRate:
+                        item_name += "FireRate";
+                        break;
+                    case ItemStat::Range:
+                        item_name += "Range";
+                        break;
+                    case ItemStat::Special:
+                        item_name += "Special";
+                        break;
+                }
+                
+                // For legendary items, add special effect
+                if (rarity == ItemRarity::Legendary) {
+                    item_name += " Mod";
+                } else {
+                    item_name += " Mod";
+                }
+                
+                // Render item name below the cell
+                text_shader_->SetUniform("text_color", name_color);
+                font_->RenderText(item_name, floorf(x), floorf(y + CELL_SIZE + 5.0f), 0.35f, name_color);
+            }
         }
     }
     
-    // Hint
-    cy = window_height / 2.0f + 150.0f;
-    text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 0.0f));
-    font_->RenderText("Press I to close, RMB on turret to equip items", cx - 100.0f, cy, 0.6f, glm::vec3(1.0f, 1.0f, 0.0f));
+    // Show discovered items count and total quantity
+    int discovered_count = item_manager->GetItemDatabase()->GetDiscoveredItemsCount();
+    int total_count = item_manager->GetItemDatabase()->GetTotalItemsCount();
     
-    if (depth_enabled) glEnable(GL_DEPTH_TEST);
+    // Calculate total quantity of all items
+    int total_quantity = 0;
+    for (const auto& row : grid) {
+        for (const auto& item : row) {
+            total_quantity += item.quantity;
+        }
+    }
+    
+    std::stringstream ss;
+    ss << "Item types discovered: " << discovered_count << " / " << total_count;
+    text_shader_->SetUniform("text_color", glm::vec3(0.0f, 1.0f, 1.0f));
+    font_->RenderText(ss.str(), floorf(START_X), floorf(START_Y + 4 * (CELL_SIZE + CELL_SPACING) + 30.0f), 0.8f, glm::vec3(0.0f, 1.0f, 1.0f));
+    
+    std::stringstream ss2;
+    ss2 << "Total items: " << total_quantity;
+    text_shader_->SetUniform("text_color", glm::vec3(0.0f, 1.0f, 1.0f));
+    font_->RenderText(ss2.str(), floorf(START_X), floorf(START_Y + 4 * (CELL_SIZE + CELL_SPACING) + 50.0f), 0.8f, glm::vec3(0.0f, 1.0f, 1.0f));
+    
+    // Hints
+    text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 0.0f));
+    font_->RenderText("Press ESC or I to close", floorf(START_X), floorf(START_Y + 4 * (CELL_SIZE + CELL_SPACING) + 70.0f), 0.7f, glm::vec3(1.0f, 1.0f, 0.0f));
+    
+    text_shader_->SetUniform("text_color", glm::vec3(0.5f, 0.8f, 1.0f));
+    font_->RenderText("To equip items: Right-click a turret to open upgrade menu", floorf(START_X), floorf(START_Y + 4 * (CELL_SIZE + CELL_SPACING) + 95.0f), 0.6f, glm::vec3(0.5f, 0.8f, 1.0f));
 }
 
 void UIManager::RenderItemGrid(ItemManager* item_manager, InputManager* input, int selected_index,
@@ -773,6 +965,162 @@ void UIManager::RenderText(const std::string& text, float x, float y, float scal
     
     // Рендерим текст через Font
     font_->RenderText(text, x, y, scale, color);
+}
+
+void UIManager::RenderInventoryGridWithClicks(class ItemManager* item_manager, class InputManager* input, int selected_index, int window_width, int window_height, int& clicked_item_index) {
+    if (!font_ || !text_shader_ || !item_manager || !input || !item_manager->GetItemDatabase()) return;
+    
+    clicked_item_index = -1;
+    
+    // Enable text rendering
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    text_shader_->Use();
+    glm::mat4 projection = glm::ortho(0.0f, (float)window_width, (float)window_height, 0.0f);
+    text_shader_->SetUniform("projection", projection);
+    text_shader_->SetUniform("text", 0);
+    
+    // Grid constants - on the right side
+    const float CELL_SIZE = 60.0f;  // Smaller for turret menu
+    const float CELL_SPACING = 8.0f;
+    const float START_X = window_width - 450.0f;  // Right side
+    const float START_Y = 150.0f;
+    
+    // Get inventory grid from database
+    auto grid = item_manager->GetItemDatabase()->GetInventoryGrid();
+    
+    // Get mouse position
+    glm::vec2 mouse = input->GetMousePosition();
+    
+    // Render column headers (rarities)
+    std::vector<std::string> rarity_names = {
+        "CMN", "UNC", "RAR", "EPC", "LGD"  // Abbreviated for space
+    };
+    
+    for (int col = 0; col < 5; ++col) {
+        float x = floorf(START_X + col * (CELL_SIZE + CELL_SPACING));
+        
+        // Color headers by rarity
+        glm::vec3 header_color;
+        switch (col) {
+            case 0: header_color = glm::vec3(0.8f, 0.8f, 0.8f); break; // Common
+            case 1: header_color = glm::vec3(0.2f, 0.8f, 0.2f); break; // Uncommon
+            case 2: header_color = glm::vec3(0.3f, 0.5f, 1.0f); break; // Rare
+            case 3: header_color = glm::vec3(0.7f, 0.3f, 1.0f); break; // Epic
+            case 4: header_color = glm::vec3(1.0f, 0.3f, 0.0f); break; // Legendary
+        }
+        
+        text_shader_->SetUniform("text_color", header_color);
+        font_->RenderText(rarity_names[col], x + 5.0f, floorf(START_Y - 25.0f), 0.5f, header_color);
+    }
+    
+    // Render row headers (stat types)
+    std::vector<std::string> stat_names = {
+        "DMG", "FR", "RNG", "SPC"  // Abbreviated
+    };
+    
+    for (int row = 0; row < 4; ++row) {
+        float y = floorf(START_Y + row * (CELL_SIZE + CELL_SPACING));
+        text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 1.0f));
+        font_->RenderText(stat_names[row], floorf(START_X - 45.0f), y + 20.0f, 0.5f, glm::vec3(1.0f, 1.0f, 1.0f));
+    }
+    
+    // Render grid cells with click detection
+    for (int row = 0; row < 4; ++row) {
+        for (int col = 0; col < 5; ++col) {
+            float x = floorf(START_X + col * (CELL_SIZE + CELL_SPACING));
+            float y = floorf(START_Y + row * (CELL_SIZE + CELL_SPACING));
+            
+            // Check if we have data for this cell
+            bool discovered = false;
+            int quantity = 0;
+            
+            if (row < static_cast<int>(grid.size()) && col < static_cast<int>(grid[row].size())) {
+                const auto& item = grid[row][col];
+                discovered = item.discovered;
+                quantity = item.quantity;
+            }
+            
+            // Calculate grid index for this cell
+            int grid_index = row * 5 + col;
+            
+            // Check if mouse is over this cell
+            bool mouse_over = (mouse.x >= x && mouse.x <= x + CELL_SIZE &&
+                              mouse.y >= y && mouse.y <= y + CELL_SIZE);
+            
+            // Check if this cell is selected
+            bool is_selected = (grid_index == selected_index);
+            
+            // Render cell background with rarity colors
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            
+            if (discovered && quantity > 0) {
+                // Color by rarity for discovered items
+                float alpha = mouse_over ? 0.8f : (is_selected ? 0.9f : 0.6f);
+                switch (col) {
+                    case 0: // Common
+                        glColor4f(0.8f, 0.8f, 0.8f, alpha);
+                        break;
+                    case 1: // Uncommon
+                        glColor4f(0.2f, 0.8f, 0.2f, alpha);
+                        break;
+                    case 2: // Rare
+                        glColor4f(0.3f, 0.5f, 1.0f, alpha);
+                        break;
+                    case 3: // Epic
+                        glColor4f(0.7f, 0.3f, 1.0f, alpha);
+                        break;
+                    case 4: // Legendary
+                        glColor4f(1.0f, 0.3f, 0.0f, alpha);
+                        break;
+                }
+            } else {
+                // Dark gray background for undiscovered items
+                glColor4f(0.2f, 0.2f, 0.2f, 0.5f);
+            }
+            
+            glBegin(GL_QUADS);
+            glVertex2f(x, y);
+            glVertex2f(x + CELL_SIZE, y);
+            glVertex2f(x + CELL_SIZE, y + CELL_SIZE);
+            glVertex2f(x, y + CELL_SIZE);
+            glEnd();
+            
+            // Render cell border
+            glm::vec3 border_color = is_selected ? glm::vec3(1.0f, 1.0f, 0.0f) : 
+                                    (mouse_over ? glm::vec3(1.0f, 1.0f, 1.0f) : glm::vec3(0.5f, 0.5f, 0.5f));
+            float border_width = is_selected ? 3.0f : (mouse_over ? 2.0f : 1.0f);
+            
+            glColor4f(border_color.r, border_color.g, border_color.b, 1.0f);
+            glLineWidth(border_width);
+            glBegin(GL_LINE_LOOP);
+            glVertex2f(x, y);
+            glVertex2f(x + CELL_SIZE, y);
+            glVertex2f(x + CELL_SIZE, y + CELL_SIZE);
+            glVertex2f(x, y + CELL_SIZE);
+            glEnd();
+            glLineWidth(1.0f);
+            
+            // Render cell content
+            if (discovered && quantity > 0) {
+                // Show quantity
+                text_shader_->SetUniform("text_color", glm::vec3(1.0f, 1.0f, 1.0f));
+                font_->RenderText(std::to_string(quantity), floorf(x + 20.0f), floorf(y + 20.0f), 0.8f, glm::vec3(1.0f, 1.0f, 1.0f));
+            } else {
+                // Show question mark for undiscovered
+                text_shader_->SetUniform("text_color", glm::vec3(0.5f, 0.5f, 0.5f));
+                font_->RenderText("?", floorf(x + 22.0f), floorf(y + 22.0f), 0.7f, glm::vec3(0.5f, 0.5f, 0.5f));
+            }
+            
+            // Click detection
+            if (mouse_over && discovered && quantity > 0 && input->IsMouseButtonJustPressed(0)) {
+                clicked_item_index = grid_index;
+                std::cout << "Clicked inventory grid cell: row=" << row << ", col=" << col << ", index=" << grid_index << std::endl;
+            }
+        }
+    }
 }
 
 void UIManager::Shutdown() {

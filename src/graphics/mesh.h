@@ -1,3 +1,4 @@
+// 3D mesh with VAO/VBO management for wireframe rendering
 #pragma once
 
 #include <glad/glad.h>

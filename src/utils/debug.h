@@ -1,3 +1,4 @@
+// Debug logging and error reporting utilities
 #pragma once
 
 #include <string>

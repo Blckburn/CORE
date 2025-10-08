@@ -1,10 +1,12 @@
+// Implementation of item collection management
 #include "item_manager.h"
 #include <iostream>
 #include <algorithm>
 
 ItemManager::ItemManager()
     : rd_()
-    , gen_(rd_()) {
+    , gen_(rd_())
+    , item_database_(std::make_unique<ItemDatabase>()) {
 }
 
 ItemManager::~ItemManager() {
@@ -15,6 +17,13 @@ bool ItemManager::Initialize() {
     std::cout << "Initializing item manager..." << std::endl;
     dropped_items_.clear();
     inventory_.clear();
+    
+    // Initialize item database
+    if (!item_database_->Initialize()) {
+        std::cerr << "Failed to initialize item database!" << std::endl;
+        return false;
+    }
+    
     return true;
 }
 
@@ -56,6 +65,15 @@ Item* ItemManager::PickupItemAtPosition(const glm::vec3& position, float radius)
                 std::cout << "Item picked up! Inventory: " << inventory_.size() << std::endl;
             }
             
+            // Add item to inventory database
+            if (item_database_ && found_stack) {
+                item_database_->AddItemToInventory(found_stack->GetRarity(), 
+                                                 found_stack->GetPrimaryStat(), 
+                                                 found_stack->GetSecondaryStat(),
+                                                 found_stack->GetEffect(),
+                                                 1); // Add 1 item
+            }
+            
             return found_stack;
         }
     }
@@ -80,9 +98,27 @@ void ItemManager::RemoveFromInventory(int index) {
         if (item->GetStackCount() > 1) {
             // Reduce stack count
             item->RemoveFromStack(1);
+            
+            // Update database
+            if (item_database_) {
+                item_database_->RemoveItemFromInventory(item->GetRarity(),
+                                                      item->GetPrimaryStat(),
+                                                      item->GetSecondaryStat(),
+                                                      item->GetEffect(),
+                                                      1);
+            }
+            
             std::cout << "Removed 1 from stack, remaining: " << item->GetStackCount() << std::endl;
         } else {
             // Remove item completely if stack is 1
+            if (item_database_) {
+                item_database_->RemoveItemFromInventory(item->GetRarity(),
+                                                      item->GetPrimaryStat(),
+                                                      item->GetSecondaryStat(),
+                                                      item->GetEffect(),
+                                                      1);
+            }
+            
             inventory_.erase(inventory_.begin() + index);
             std::cout << "Removed item from inventory index " << index << std::endl;
         }

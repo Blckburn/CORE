@@ -1,3 +1,4 @@
+// Font rendering system for UI text
 #pragma once
 
 #include <string>

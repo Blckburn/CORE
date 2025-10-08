@@ -1,3 +1,4 @@
+// Implementation of base entity class
 #include "entity.h"
 
 // Entity class implementation

@@ -1,3 +1,4 @@
+// Input manager for keyboard and mouse events
 #pragma once
 
 #include <glm/glm.hpp>

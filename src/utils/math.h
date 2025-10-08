@@ -1,3 +1,4 @@
+// Math utilities and helper functions
 #pragma once
 
 #include <glm/glm.hpp>

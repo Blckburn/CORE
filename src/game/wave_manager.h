@@ -1,3 +1,4 @@
+// Manages enemy waves with increasing difficulty
 #pragma once
 
 #include <vector>

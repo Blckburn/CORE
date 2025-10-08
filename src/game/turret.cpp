@@ -1,3 +1,4 @@
+// Implementation of turret targeting and firing logic
 #include "turret.h"
 #include "enemy.h"
 #include "projectile_manager.h"

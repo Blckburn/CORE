@@ -1,3 +1,4 @@
+// Manages projectile lifecycle and collision detection
 #pragma once
 
 #include <vector>

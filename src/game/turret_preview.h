@@ -1,3 +1,4 @@
+// Visual preview for turret placement (green/red indicator)
 #pragma once
 
 #include <glm/glm.hpp>

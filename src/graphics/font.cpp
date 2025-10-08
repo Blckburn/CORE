@@ -1,3 +1,4 @@
+// Implementation of font rendering system
 #include "font.h"
 #include <iostream>
 #include <glad/glad.h>

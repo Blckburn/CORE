@@ -1,6 +1,8 @@
+// Manages collectible items in the game world
 #pragma once
 
 #include "item.h"
+#include "item_database.h"
 #include <vector>
 #include <memory>
 #include <random>
@@ -29,6 +31,10 @@ public:
     std::vector<std::unique_ptr<Item>>& GetInventoryMutable() { return inventory_; }
     int GetInventoryCount() const { return static_cast<int>(inventory_.size()); }
     
+    // Item database access
+    ItemDatabase* GetItemDatabase() { return item_database_.get(); }
+    const ItemDatabase* GetItemDatabase() const { return item_database_.get(); }
+    
     // Remove item from inventory by index
     void RemoveFromInventory(int index);
     
@@ -45,6 +51,7 @@ private:
     static const int MAX_DROPPED_ITEMS = 20; // Maximum items on ground
     std::vector<std::unique_ptr<Item>> dropped_items_; // Items in the world
     std::vector<std::unique_ptr<Item>> inventory_;     // Items in player inventory
+    std::unique_ptr<ItemDatabase> item_database_;      // Database of all possible items
     
     // Random number generation for rarity
     std::random_device rd_;

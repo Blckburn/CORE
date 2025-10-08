@@ -1,3 +1,4 @@
+// Implementation of turret management and placement
 #include "turret_manager.h"
 #include <algorithm>
 #include <iostream>

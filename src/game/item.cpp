@@ -1,3 +1,4 @@
+// Implementation of game item system
 #include "item.h"
 #include <random>
 #include <iostream>

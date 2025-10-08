@@ -1,3 +1,4 @@
+// Implementation of main game logic
 #include "game.h"
 #include "graphics/renderer.h"
 #include "core/input.h"
@@ -428,7 +429,17 @@ void Game::Update() {
     // Toggle inventory with I key
     if (state_ == GameState::Playing && input_->IsKeyJustPressed(73)) { // GLFW_KEY_I
         inventory_open_ = !inventory_open_;
-        std::cout << (inventory_open_ ? "Inventory opened" : "Inventory closed") << std::endl;
+        if (inventory_open_) {
+            // Pause game when opening inventory
+            paused_ = true;
+            std::cout << "Inventory opened (game paused)" << std::endl;
+        } else {
+            // Resume game when closing inventory
+            paused_ = false;
+            // Reset all turret fire timers to prevent mass firing
+            turret_manager_->ResetAllFireTimers();
+            std::cout << "Inventory closed (game resumed)" << std::endl;
+        }
     }
 
     // Hold R for 2 seconds to restart the game
@@ -888,6 +899,15 @@ void Game::Render() {
         // Inventory screen (I key)
         if (state_ == GameState::Playing && inventory_open_) {
             ui_manager_->RenderInventoryScreen(item_manager_.get(), w, h);
+            
+            // Close inventory on ESC
+            if (input_->IsKeyJustPressed(256)) { // ESC
+                inventory_open_ = false;
+                paused_ = false;
+                // Reset all turret fire timers to prevent mass firing
+                turret_manager_->ResetAllFireTimers();
+                std::cout << "Inventory closed (game resumed)" << std::endl;
+            }
         }
 
         // Tooltip near cursor in placement mode: show turret cost with color by affordability

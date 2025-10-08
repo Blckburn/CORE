@@ -1,3 +1,4 @@
+// 3D orbital camera with rotation and zoom controls
 #pragma once
 
 #include <glm/glm.hpp>

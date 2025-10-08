@@ -1,3 +1,4 @@
+// Implementation of projectile pool management
 #include "projectile_manager.h"
 #include "projectile.h"
 #include "enemy.h"

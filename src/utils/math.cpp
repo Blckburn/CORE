@@ -1,3 +1,4 @@
+// Implementation of math utility functions
 #include "math.h"
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>

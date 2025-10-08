@@ -1,3 +1,4 @@
+// Main game logic coordinator and state manager
 #pragma once
 
 #include <memory>

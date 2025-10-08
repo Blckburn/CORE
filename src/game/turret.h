@@ -1,3 +1,4 @@
+// Defensive turret that auto-targets and shoots enemies
 #pragma once
 
 #include <glm/glm.hpp>

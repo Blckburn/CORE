@@ -1,3 +1,4 @@
+// Implementation of homing projectile physics
 #include "projectile.h"
 #include "enemy.h"
 #include <iostream>

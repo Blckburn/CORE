@@ -1,3 +1,4 @@
+// Main entry point for CORE game
 #include <iostream>
 #include <memory>
 #include "core/engine.h"

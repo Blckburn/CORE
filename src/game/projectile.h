@@ -1,3 +1,4 @@
+// Homing projectile fired by turrets
 #pragma once
 
 #include <glm/glm.hpp>

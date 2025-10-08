@@ -1,3 +1,4 @@
+// Implementation of 3D orbital camera
 #include "camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 

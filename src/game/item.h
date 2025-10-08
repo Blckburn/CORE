@@ -1,3 +1,4 @@
+// Game item with position and properties
 #pragma once
 
 #include <glm/glm.hpp>

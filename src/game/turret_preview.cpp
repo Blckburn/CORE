@@ -1,3 +1,4 @@
+// Implementation of visual turret placement preview
 #include "turret_preview.h"
 #include "graphics/mesh.h"
 #include "graphics/shader.h"

@@ -1,3 +1,4 @@
+// OpenGL renderer with wireframe rendering support
 #pragma once
 
 #include <memory>

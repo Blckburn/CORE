@@ -1,3 +1,4 @@
+// Implementation of time management
 #include "time.h"
 
 std::chrono::high_resolution_clock::time_point Time::start_time_;

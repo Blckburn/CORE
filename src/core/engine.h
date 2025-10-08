@@ -1,3 +1,4 @@
+// Main game engine - initializes and coordinates all game systems
 #pragma once
 
 #include <memory>

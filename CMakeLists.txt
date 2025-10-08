@@ -56,6 +56,7 @@ set(SOURCES
     src/game/ui_manager.cpp
     src/game/item.cpp
     src/game/item_manager.cpp
+    src/game/item_database.cpp
     src/utils/math.cpp
     src/utils/debug.cpp
 )
@@ -83,6 +84,7 @@ set(HEADERS
     src/game/turret_preview.h
     src/game/wave_manager.h
     src/game/ui_manager.h
+    src/game/item_database.h
     src/utils/math.h
     src/utils/debug.h
 )

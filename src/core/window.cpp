@@ -1,3 +1,4 @@
+// Implementation of GLFW window management
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "window.h"

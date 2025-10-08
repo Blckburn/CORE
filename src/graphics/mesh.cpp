@@ -1,3 +1,4 @@
+// Implementation of 3D mesh and geometry creation
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <cmath>

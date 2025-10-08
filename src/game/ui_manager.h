@@ -1,6 +1,8 @@
+// UI rendering and game stats display
 #pragma once
 
 #include <string>
+#include <memory>
 #include <glm/glm.hpp>
 
 class Shader;
@@ -23,6 +25,7 @@ public:
     // Render item grid on right side (for turret menu)
     void RenderItemGrid(class ItemManager* item_manager, class InputManager* input, int selected_index, 
                         int window_width, int window_height, int& clicked_item_index);
+    
     // Menus
     void RenderMainMenu(int window_width, int window_height, int selected_index);
     void RenderOptionsMenu(int window_width, int window_height, int selected_index);
@@ -44,5 +47,7 @@ private:
     void RenderNumber(int number, float x, float y, float scale, const glm::vec3& color);
     void RenderBar(float x, float y, float width, float height, float fill_percent, const glm::vec3& color);
     void RenderCurrency(int amount, float x, float y);
+    void RenderInventoryGrid(class ItemManager* item_manager, int window_width, int window_height);
+    void RenderInventoryGridWithClicks(class ItemManager* item_manager, class InputManager* input, int selected_index, int window_width, int window_height, int& clicked_item_index);
 };
 

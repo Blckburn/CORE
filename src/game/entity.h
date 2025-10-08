@@ -1,3 +1,4 @@
+// Base entity class for all game objects
 #pragma once
 
 #include <cstdint>

@@ -1,3 +1,4 @@
+// OpenGL shader program wrapper
 #pragma once
 
 #include <string>

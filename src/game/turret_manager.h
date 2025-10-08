@@ -1,3 +1,4 @@
+// Manages turret collection, placement validation and combat coordination
 #pragma once
 
 #include "turret.h"

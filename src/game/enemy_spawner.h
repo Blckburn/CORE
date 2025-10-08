@@ -1,3 +1,4 @@
+// Spawns enemies at random positions around the play area
 #pragma once
 
 #include "enemy.h"

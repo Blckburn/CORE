@@ -1,3 +1,4 @@
+// Implementation of input handling system
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "input.h"

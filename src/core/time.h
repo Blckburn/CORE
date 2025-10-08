@@ -1,3 +1,4 @@
+// Time management and delta time calculation
 #pragma once
 
 #include <chrono>

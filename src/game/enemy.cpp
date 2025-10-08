@@ -1,3 +1,4 @@
+// Implementation of enemy behavior and movement
 #include "enemy.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/random.hpp>

@@ -1,3 +1,4 @@
+// GLFW window wrapper with OpenGL context management
 #pragma once
 
 #include <string>

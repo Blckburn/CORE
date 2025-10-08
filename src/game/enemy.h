@@ -1,3 +1,4 @@
+// Enemy entity that moves toward the center cube
 #pragma once
 
 #include <glm/glm.hpp>

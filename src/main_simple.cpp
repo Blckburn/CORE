@@ -1,3 +1,4 @@
+// Simple test version of CORE game
 #include <iostream>
 #include <windows.h>
 

@@ -1,3 +1,4 @@
+// Implementation of 3D ray casting
 #include "ray_caster.h"
 #include "camera.h"
 #include <glm/gtc/matrix_inverse.hpp>

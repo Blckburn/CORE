@@ -1,3 +1,4 @@
+// Implementation of main game engine
 #include "engine.h"
 #include "window.h"
 #include "graphics/renderer.h"
